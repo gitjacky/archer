@@ -3,7 +3,7 @@
 
 ### 开发语言和推荐环境：
 python：3.4<br/>
-django：1.8.17<br/>
+django：1.8.18<br/>
 mysql : 5.6及以上<br/>
 linux : 64位linux操作系统均可
 
