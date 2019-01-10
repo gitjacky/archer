@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+	<div class="panel panel-default" style="width: 1070px;height: 100%;padding-bottom: 15px">
+        <div class="panel panel-heading"><h4>版本SQL发布</h4></div>
+
+	<form id="form-versionsql" action="/versions/" method="post" class="form-inline" role="form" style="padding-left: 30px">
+
+		{% csrf_token %}
+
+		<div class="row">
+				<div class="form-group">
+                    <label class="sr-only control-label" for="workflow_name">上线单名称</label>
+					<input id="workflow_name" type="text" name="workflow_name" class="form-control" style="width: auto;" data-name="上线单名称" placeholder="如TEST_OMS_0.0.2.1_发布" required>
+				</div>
+				<div class="form-group" style="width: 125px;">
+                    <label class="sr-only control-label" for="svn_path">选择SVN目录</label>
+					<select id="svn_path" name="svn_path" class="" onchange="p_getobj();" data-name="选择SVN目录" data-placeholder="选择SVN目录:" required style="width: 120px;height:33px;border-radius:5px;overflow: hidden">
+          				<option  value="is-empty" disabled="" selected="selected">选择SVN目录</option>
+                        <option  value="02Release">02Release</option>
+                        <option  value="03UAT_Tags">03UAT_Tag</option>
+						        		
+					</select>
+				</div>
+
+				<div class="form-group" style="width: 120px;">
+                    <label class="sr-only control-label" for="p_name">父项目名</label>
+					<select id="p_name" name="p_name" class="" onchange="s_getobj();" data-name="父项目名" data-placeholder="父项目名" required style="width: 120px;height:33px;border-radius:5px;overflow: hidden">
+          				<option value="is-empty" disabled="" selected="selected">父项目名</option>
+        			</select>	
+				</div>
+
+				<div class="form-group" style="width: 120px;">
+                    <label class="sr-only control-label" for="s_name">子项目名</label>
+					<select id="s_name" name="s_name" class="" onchange="sub_getobj();" data-name="子项目名" data-placeholder="子项目名" required style="width: 120px;height:33px;border-radius:5px;overflow: hidden">
+          				<option value="is-empty" disabled="" selected="selected">子项目名</option>
+        			</select>
+				</div>
+
+				<div class="form-group" style="width: 130px;">
+                    <label class="sr-only control-label" for="ver_name">版本号</label>
+					<select id="ver_name" name="ver_name" class="" onchange="get_versionfile(doc);" data-name="版本号" data-placeholder="版本号:" required style="width: 120px;height:33px;border-radius:5px;overflow: hidden">
+          			<option value="is-empty" disabled="" selected="selected">版本号</option>
+					</select>
+				</div>
+
+				<div class="form-group" style="width: 110px">
+                    <label class="sr-only control-label" for="d_envirment">发布环境</label>
+					<select id="d_envirment" name="d_envirment" class=""  data-name="发布环境" data-placeholder="发布环境:" required style="width: 110px;height:33px;border-radius:5px;overflow: hidden">
+          			<option value="is-empty" disabled="" selected="selected">发布环境</option>
+
+					</select>
+				</div>
+
+				<div class="form-group" style="width: 110px">
+                    <label class="sr-only control-label" for="review_man">选择审核人</label>
+					<select id="review_man" name="review_man" class="" data-name="审核人" data-placeholder="选择审核人:" required style="width: 110px;height:33px;border-radius:5px;overflow: hidden">
+          			<option value="is-empty" disabled="" selected="selected">选择审核人</option>
+
+					</select>
+				</div>
+            <table id="table1" class="table table-striped table-hover" style="width: 1025px;">
+                <thead>
+                <tr>
+                    <th style="width: 50px">ID</th>
+                    <th>脚本文件名称</th>
+                    <th style="width: 50px">选择</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Fss_create_table_01.sql</td>
+                        <td><label><input type="checkbox"/></label></td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+				<div class="form-group">
+                    <button type="button" class="btn btn-danger" style="margin-left: 0px; width: 80px; height: 35px;" onclick="selectAll()">全选</button>
+                    <button type="reset" class="btn btn-warning" style="margin-left: 10px;" >清空选项</button>
+                    <button type="button" class="btn btn-info" style="margin-left: 10px; width: 80px;height: 35px;" onclick="unSelect()">取消全选</button>
+{#                    <input type="button" id="btn-versionsql" class="btn btn-primary" style="margin-left: 10px;"  value="提交工单" />#}
+                    <button type="button" id="btn-versionsql" class="btn btn-primary" style="margin-left: 10px; width: 80px;height: 35px;"  value="提交工单">提交工单</button>
+				</div>
+        </div>
+	</form>
+    </div>
+</div>
+
+	<div id="inception-result" style="display:none;" class="row clearfix">
+		<br/>
+		<div id="inception-result-col" class="col-md-12">
+		
+		</div>
+	</div>
+
+<script type="text/javascript">
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    //全选
+    function selectAll(){
+        $("INPUT[type='checkbox']").each( function() {
+            $(this).prop('checked', true);
+            $(this).addClass('checked');
+        });
+    };
+
+    //取消全选
+    function unSelect(){
+        $("INPUT[type='checkbox']").each( function() {
+            $(this).prop('checked', false);
+            $(this).removeClass('checked');
+
+      });
+    };
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+    //获取父项目名列表
+    function p_getobj(){
+        var base_svn = document.getElementById("svn_path");
+        getdbsaudit();
+        console.log(base_svn.value);
+        $.ajax({
+            type:"GET",
+            url:"/versioninfo/",
+            async: "false",
+            dataType: "json",
+            data:{base_svn:base_svn.value},
+            //success用来接收versionsql()函数执行之后的return HttpResponse返回值
+            success:function(arg){
+                console.log(arg.pro_dir);
+                var pro_dir=arg.pro_dir;
+                var opSelect = document.getElementById("p_name");
+                $("#ver_name").empty();
+
+                if(pro_dir.length > 0) {
+                    var len=pro_dir.length;
+
+                    for(var i=0;i<len;i++){
+                        opSelect.options[i+1] = new Option();
+                        opSelect.options[i+1].text = pro_dir[i];
+                        opSelect.options[i+1].value = pro_dir[i];
+                    };
+                    console.log(opSelect);
+                }else
+                    $("#s_name").hide();
+                    $("#ver_name").hide();
+
+                },
+            error:function () {
+                console.log('failed!')
+            }
+
+            });
+
+    };
+
+    //获取子项目名列表
+    function s_getobj() {
+       var base_svn = document.getElementById("svn_path").value;
+       var opSelect = document.getElementById("p_name").value;
+       var s_objElement = document.getElementById("s_name");
+       var reSpaceCheck = /^(\d+)\.(\d+)\.(\d+)\.(\d+)$/;
+
+       $.ajax({
+           type: "GET",
+           url: "/versioninfo/",
+           dataType: "json",
+           data: {
+               base_svn: base_svn + '/' + opSelect
+           },
+           success: function (datas) {
+               console.log(datas);
+               var pro_dir = datas.pro_dir;
+               $("#s_name").empty();
+               if (pro_dir.length > 0) {
+                   var len = pro_dir.length;
+                   for (var i = 0; i < len; i++) {
+                       s_objElement.options[i] = new Option();
+                       s_objElement.options[i].text = pro_dir[i];
+                       s_objElement.options[i].value = pro_dir[i];
+                   };
+
+               }//else
+                 //   $("#s_name").hide();
+               if (reSpaceCheck.test(s_objElement.value)){
+                   $("#ver_name").hide();
+                   get_allfiles();
+               }else{
+                   $("#ver_name").show();
+                   $("#ver_name").empty();
+                   $("#table1 tbody").html("");
+               }
+
+           },
+           error: function () {
+               console.log('failed!')
+           }
+
+
+       });
+
+
+    };
+
+    //获取版本号列表
+    function sub_getobj() {
+       var base_svn = document.getElementById("svn_path").value;
+       var opSelect = document.getElementById("p_name").value;
+       var s_objElement = document.getElementById("s_name").value;
+       var sub_objElement = document.getElementById("ver_name");
+       $("#table1 tbody").html("");
+       $.ajax({
+           type: "GET",
+           url: "/versioninfo/",
+           dataType: "json",
+           async: false,
+           data: {
+               base_svn: base_svn + '/' + opSelect + '/' + s_objElement
+           },
+           success: function (datas) {
+               console.log(datas);
+               var pro_dir = datas.pro_dir;
+               $("#ver_name").empty();
+               if (pro_dir.length > 0) {
+                   var len = pro_dir.length;
+
+                   for (var i = 0; i < len; i++) {
+                       sub_objElement.options[i] = new Option();
+                       sub_objElement.options[i].text = pro_dir[i];
+                       sub_objElement.options[i].value = pro_dir[i];
+                   };
+               get_allfiles();
+               }else
+                    $("#ver_name").hide();
+
+           },
+           error: function () {
+               console.log('failed!')
+           }
+
+
+       });
+
+
+    };
+
+    //获取子项目版本号目录
+    function get_versionfile() {
+        $.ajax({
+            type: "GET",
+            url:"/versioninfo/",
+            dataType: "json",
+            data:{base_svn: base_svn + '/' + opSelect + '/' + s_objElement + '/' + sub_objElement},
+            success:function (args) {
+                add_filelist(args);
+
+            }
+
+        });
+    };
+
+    //获取正常版本目录下所有.sql文件名
+    function get_allfiles() {
+       var base_svn = document.getElementById("svn_path").value;
+       var opSelect = document.getElementById("p_name").value;
+       var s_objElement = document.getElementById("s_name").value;
+       var sub_objElement = document.getElementById("ver_name").value;
+       $("#table1 tbody").html("");
+       if (s_objElement !="" || s_objElement != null){
+            $.ajax({
+                type: "GET",
+                url:"/versioninfo/",
+                dataType: "json",
+                data:{base_svn: base_svn + '/' + opSelect + '/' + s_objElement},
+                success:function (args) {
+                    //添加tbody行与列
+                    add_filelist(args);
+                }
+
+            })
+       }else{return false;}
+
+    };
+
+    //获取列表函数
+    function add_filelist(doc) {
+        var file_names=doc.pro_dir;
+        var row_count=file_names.length;
+        for (var i=0;i<row_count;i++){
+            var table1 = $('#table1');
+            var firstTr = table1.find('tbody>tr:first');
+            var row = $("<tr></tr>");
+            var td1 = $("<td>" + i + "</td>");
+            var td2 = $("<td>" + file_names[i] + "</td>");
+            var td3 = $("<td><lable><input type='checkbox'></lable></td>");
+
+            row.append(td1);
+            row.append(td2);
+            row.append(td3);
+            console.log(row);
+            table1.append(row);
+        }
+    };
+
+   //获取发布环境与审核人
+    function getdbsaudit() {
+        var envElement = document.getElementById("d_envirment");
+        var auditElement = document.getElementById("review_man");
+        $.ajax({
+            type: "GET",
+            url: "/clusterandaudit/",
+            dataType: "json",
+            success: function (data) {
+
+                console.log(data.db_envs);
+                //获取数据库连接信息并添加到执行环境下拉列表
+                var clusterdbs = data.db_envs;
+                var clusterdbs_len = clusterdbs.length;
+                if (clusterdbs) {
+                    for (var i = 0; i < clusterdbs_len; i++) {
+                        console.log(i);
+                        envElement.options[i] = new Option();
+                        envElement.options[i].text = clusterdbs[i];
+                        envElement.options[i].value = clusterdbs[i];
+                    }
+                    ;
+                    console.log(envElement);
+                }
+                ;
+
+                //获取审核人信息并添加到审核人下拉列表
+                if (data.listAllReviewMen) {
+                    var listAllReviewMen = data.listAllReviewMen;
+                    var listAllReviewMen_len = listAllReviewMen.length;
+                    for (var i = 0; i < listAllReviewMen_len; i++) {
+                        auditElement.options[i] = new Option();
+                        auditElement.options[i].text = listAllReviewMen[i];
+                        auditElement.options[i].value = listAllReviewMen[i];
+                    }
+                    ;
+                    console.log(auditElement);
+                }
+
+            },
+            error: function () {
+                console.log('failed!')
+            }
+        });
+
+    };
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+</script>
+
+{% endblock content %}

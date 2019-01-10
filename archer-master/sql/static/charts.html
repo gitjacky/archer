@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container-fluid col-lg-12 cl">
+        <canvas id="summaryWorkflowByMonth" height="60px"></canvas>
+        <canvas id="summaryWorkflowByPerson" height="60px"></canvas>
+        <div id="summaryCancelByPerson" style="min-width: 400px;height: 400px;"></div>
+        <div id="summaryCancelByproj" style="min-width: 400px;height: 400px;"></div>
+
+    </div>
+    {% load static %}
+    <script src="{% static 'highcharts/highcharts.js' %}"></script>
+    <script src="{% static 'highcharts/modules/exporting.js' %}"></script>
+    <script src="{% static 'highcharts/themes/grid-light.js' %}"></script>
+{% endblock content %}
+

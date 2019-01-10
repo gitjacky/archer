@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+    <div style="padding: 0px 10px 10px 0px;">
+        <h4 style="font-family: 'Microsoft YaHei UI';color: #2aabd2">| <span
+                style="color: #0f0f0f">MONGO编码查询：</span></h4>
+        <div style="width:100%; height:2px; border-top:1px solid #d5d5d5; clear:both;margin-top: 18px;margin-bottom: 15px;"></div>
+        <div class="row">
+            <div id="code_search" class="form form-inline" role="form">
+
+                <div class="form-group form-inline">
+                    <label for="mg_type" class="row-sm-4 control-label"
+                           style="font-size: medium;padding-top: 4px;padding-right: 0;padding-left: 20px;">编码类型</label>
+                    <div class="form-group" style="padding-left: 10px;">
+                        <select id="mg_type" name="编码类型" class="form-control selectpicker show-tick bs-select-hidden"
+                                data-name="编码类型" data-placeholder="编码类型" required
+                                style="border-radius:5px;overflow: hidden;" onchange="mogo_env();">
+                            <option value="编码类型" disabled="" selected="selected">编码类型</option>
+                            <option value="0">服务接口</option>
+                            <option value="1">定时器</option>
+                            <option value="2">MQ队列</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group form-inline">
+                    <label for="env_name" class="row-sm-4 control-label"
+                           style="font-size: medium;padding-top: 4px;padding-right: 0;padding-left: 20px;">环境名称</label>
+                    <div class="form-group" style="padding-left: 10px;">
+                        <select id="env_name" name="编码类型" class="form-control selectpicker show-tick bs-select-hidden"
+                                data-name="环境名称" data-placeholder="环境名称" required
+                                style="border-radius:5px;overflow: hidden;">
+                            <option value="is-empty" disabled="" selected="selected">环境名称
+                            </option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group" style="padding-left: 50px;">
+                    <input type="text" class="form-control" name="请输入编码名称" id="code_name" placeholder="请输入编码名称"
+                           style="height: 32px;" required><span
+                        class="input-group-addon btn btn-primary"
+                        onclick="chose_content();">查询</span>
+                </div>
+
+            </div><!-- code_search -->
+        </div><!-- /.row -->
+    </div>
+
+    <div class="panel panel-default" id="sresult" style="display: none;">
+        <div class="panel-heading" style="width: 99.9%">编码详情</div>
+        <div class="panel-body" id="sourcelist">
+        </div>
+    </div>
+    {% load staticfiles %}
+    <script src="{% static 'jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'user/js/mogo.js' %}"></script>
+{% endblock content %}

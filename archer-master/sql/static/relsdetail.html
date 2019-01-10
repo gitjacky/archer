@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h4>版本工单名称：<span id="workrelname">{{ release_name }}</span>
+        <button class='btn btn-warning btn-xs other_rel'
+                style='width: 100px;height: 34px;margin-left:15px;'
+                type="button"
+                value="上线其他环境" onclick="other_rel({{ rsid }})" data-toggle="modal" data-target="#relModal">上线其他环境
+        </button>
+    </h4>
+
+    <div class="panel-group" id="accordion" style="width: 99.5%;margin-bottom: 10%">
+        <ul id="myTab" class="nav nav-tabs">
+            <li class="active">
+                <a href="#dev" data-toggle="tab">开发备注</a>
+            </li>
+            <li>
+                <a href="#dba" data-toggle="tab">DBA备注</a>
+
+            </li>
+        </ul>
+        <div id="myTabContent" class="tab-content">
+            <div class="tab-pane fade in active" id="dev">
+                <div class="form-control-static" rows="15" style="padding: 15px 2px 15px 2px;"><span id="memo"
+                                                                                                     style='color: red'>{{ memo_content | linebreaksbr }}</span>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="dba">
+                <div class="form-control-static" rows="15" style="padding: 15px 2px 15px 2px;"><span id="dbamemo"
+                                                                                                     style='color: blue;'>{{ dba_memo | linebreaksbr }}</span>
+                </div>
+                <div class="form-group" style="margin-left: 10px">
+                    {% if loginUser in all_reviewer %}
+                        <button class="btn btn-default btn-sm" data-toggle="modal" data-target="#dbamemoModal"
+                                onclick="get_dbamemo({{ rsid }})">
+                            <span class="glyphicon glyphicon-edit"></span> 备注
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <table class="table table-striped table-hover table-bordered" id="detail1" style="width: 99.5%;">
+            <thead>
+            <tr style="background-color: #F5F6FA">
+                <th>
+                    文件名
+                </th>
+                <th>
+                    发起人
+                </th>
+                <th>
+                    上线环境
+                </th>
+                <th>
+                    发起时间
+                </th>
+                <th>
+                    结束时间
+                </th>
+                <th>
+                    当前状态
+                </th>
+                <th>
+                    查看详情
+                </th>
+                <th>
+                    自动审核
+                </th>
+
+            </tr>
+            </thead>
+            <tbody>
+            {% for i in releaseDetail_set %}
+                {#                   以下两行代码为每行中查看详情与自动审核、执行通过或中止执行操作按钮获取本行id与sql文件名的方式，顺序与位置不要移动#}
+                <input type="hidden" class="rel_file" value="{{ i.release_file }}"/>
+                <input type="hidden" class="detailrel_id" name="detailrel_id" value="{{ i.id }}">  {# 版本文件所对应的id #}
+
+                <tr class="lei" id="detail_record">
+                    <td style="width: 380px;">
+                        {{ i.release_file }}
+                    </td>
+                    <td style="width: 110px;">
+                        {{ i.engineer }}
+                    </td>
+                    <td style="width: 120px;">
+                        {{ i.cluster_name }}
+                    </td>
+                    <td style="width: 200px;">
+                        {{ i.create_time|date:"Y-m-d H:i:s" }}
+                    </td>
+                    <td style="width: 200px;">
+                        {{ i.finish_time|date:"Y-m-d H:i:s" }}
+                    </td>
+                    <td style="width: 170px;">
+                        {% if i.status == "已正常结束" %}
+                            <font color="green">
+                        {% else %}
+                            <font color="red">
+                        {% endif %}
+                        <B id="Detail_status">{{ i.status }}</B></font>
+                    </td>
+                    <td style="width: 110px;padding-left: 7px;">
+                        <button class='btn btn-info btn-xs rev_detail'
+                                style='width: 65px;height: 28px;float: left;margin-right: 0px;' type="button"
+                                value="查看详情">
+                            查看详情
+                        </button>
+                    </td>
+                    <td style="width: 110px;padding-left: 7px;">
+                        {% if i.status != "已正常结束" and  i.status != "执行中"%}
+                            <button class='btn btn-info btn-xs rel_autoreview' id="{{ i.id }}"
+                                    style='width: 65px;height: 28px;float: left;margin-right: 0px;' type="button"
+                                    value="自动审核">自动审核
+                            </button>
+                        {% endif %}
+                    </td>
+                </tr>
+
+                <tr class="active" id="detail2" style="display: none">
+                    <td colspan="8" style="padding:0px;border: 0px;margin: 0px;">
+                        <table class="table table-striped table-hover pad"
+                               style='table-layout:fixed;width: 100%;height: 100%'>
+                            <thead>
+                            <tr>
+                                <th width="40px">
+                                    ID
+                                </th>
+                                <th>
+                                    SQL内容
+                                </th>
+                                <th>
+                                    自动审核结果
+                                </th>
+                                <th width="100px">
+                                    影响行数
+                                </th>
+                                <th width="100px">
+                                    执行耗时
+                                </th>
+                                <th width="100px">
+                                    执行状态
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+
+                            </tbody>
+                        </table>
+
+                        {% if i.status == '等待DBA审核' %}
+                            {% if loginUser in all_reviewer %}
+                                <form style="display:inline-block;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="execute_id" value="{{ i.id }}">
+                                    <input id="btnExecute" type="button" class="btn btn-primary btn-default audit_ok"
+                                           data-loading-text="Loading..." value="通过并执行"/>
+                                </form>
+                            {% endif %}
+
+                            <form style="display:inline-block;">
+                                {% csrf_token %}
+                                <input type="hidden" name="recordid" value="{{ i.id }}">
+                                <input type="button" id="btnCancel" class="btn btn-default audit_failed"
+                                       data-loading-text="Loading..." value="终止流程"/>
+                            </form>
+                        {% elif i.status == '自审不通过' %}
+                            <form style="display:inline-block;">
+                                {% csrf_token %}
+                                <input type="hidden" name="recordid" value="{{ i.id }}">
+                                <input type="button" id="btnCancel" class="btn btn-default audit_failed"
+                                       data-loading-text="Loading..." value="终止流程"/>
+                            </form>
+                        {% elif i.status == '已正常结束' %}
+                            <form style="display:inline-block;">
+                                {% csrf_token %}
+                                <input type="hidden" name="workflowid" value="{{ i.id }}">
+                            </form>
+
+                        {% endif %}
+                    </td>
+                </tr>
+
+            {% empty %}
+                <tr>
+                    <td>当前状态暂无工单.</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+
+        </table>
+        {#    <!-- 模态框示例（Modal） -->#}
+        {#    <form method="post" action="" class="form-horizontal" role="form" id="form_data" onsubmit="return check_form()" style="margin: 20px;">#}
+        <form method="post" action="" class="form-horizontal" role="form" id="form_data" style="margin: 20px;">
+            {% csrf_token %}
+            <div class="modal fade" id="dbamemoModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                                DBA备注
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <form class="form-horizontal" role="form">
+
+                                <div class="form-group">
+                                    <label for="remark" class="col-sm-2 control-label">备注</label>
+                                    <div class="col-sm-9">
+                                    <textarea class="form-control" rows="10" name="remark" value="" id="remark"
+                                              placeholder="备注"></textarea>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">关闭
+                            </button>
+                            <button type="submit" class="btn btn-primary" onclick="add_memo({{ rsid }})">
+                                提交
+                            </button>
+                            <span id="tip"> </span>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+        </form>
+        <form method="post" action="" class="form-horizontal" role="form" id="form_release" style="margin: 20px;">
+            {% csrf_token %}
+            <div class="modal fade" id="relModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                                &times;
+                            </button>
+                            <h4 class="modal-title" id="myModalLabel">
+                                上线其他环境
+                            </h4>
+                        </div>
+                        <div class="modal-body">
+                            <form class="form-horizontal" role="form">
+
+                                <div class="form-group">
+                                    <label for="relname" class="col-sm-3 control-label">版本工单名</label>
+                                    <div class="col-sm-7">
+                                        <input class="form-control" rows="2" name="relname" value="" id="relname"
+                                               placeholder="版本工单名"/>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="memo_id" class="col-sm-3 control-label">开发备注</label>
+                                    <div class="col-sm-7">
+                                        <textarea id="memo_id" class="form-control" cols="38" rows="6" style="margin-bottom: 8px" value="" placeholder="输入脚本执行顺序、目录下是否有mongo接口要同步等" ></textarea>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="sqlfile" class="col-sm-3 control-label">脚本文件名</label>
+                                    <div class="col-sm-9">
+                                        <p class="form-control-static" rows="15" name="sqlfile" value="" id="sqlfile"
+                                           placeholder=""></p>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="o_envirment" class="col-sm-3 control-label">上线环境</label>
+                                    <div class="col-sm-9">
+                                        <select id="o_envirment" name="o_envirment" class="form-control"
+                                                data-name="上线环境" data-placeholder="上线环境:" required
+                                                style="width: 250px;border-radius:5px;overflow: hidden">
+                                            <option value="is-empty" disabled="" selected="selected">--------- 选择上线环境
+                                                ---------
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="subuser" class="col-sm-3 control-label">当前提交人</label>
+                                    <div class="col-sm-4">
+                                        <input class="form-control" rows="1" name="subuser" value="" id="subuser"
+                                               placeholder="" readonly/>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-default" data-dismiss="modal">取消
+                            </button>
+                            <button type="submit" class="btn btn-primary" onclick="deploy_other({{ rsid }})">
+                                提交
+                            </button>
+                            <span id="tip"></span>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal -->
+            </div>
+        </form>
+    </div>
+{% endblock content %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="myAlert" class="alert alert-warning">
+{#	<a href="#" class="close" data-dismiss="alert">&times;</a>#}
+    <a href="#" class="close" data-dismiss="alert"></a>
+	<strong>{{errMsg}}</strong>
+</div>
+
+{% endblock content %}

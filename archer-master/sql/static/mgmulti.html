@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block content %}
+    {% load staticfiles %}
+    <script src="{% static 'jquery/jquery.min.js' %}"></script>
+    <script src="{% static 'user/js/mogo.js' %}"></script>
+    <script src="{% static 'user/js/calendar.js' %}"></script>
+    <div style="padding: 0px 10px 10px 0px;">
+        <h4 style="font-family: 'Microsoft YaHei UI';color: #2aabd2">| <span
+                style="color: #0f0f0f">MONGO编码批量提交：</span></h4>
+        <div style="width:100%; height:2px; border-top:1px solid #d5d5d5; clear:both;margin-top: 18px;margin-bottom: 15px;"></div>
+
+        <form id="form-filter" class="form-inline" role="form">
+
+            {% csrf_token %}
+            <div class="form form-inline" style="width: 100%;height: 100%;">
+                <label for="source_env" class="row-sm-4 control-label"
+                       style="font-size: medium;">查询环境：</label>
+                <div class="form-group">
+
+                    <select id="source_env" name="select_env"
+                            class="form-control selectpicker show-tick bs-select-hidden"
+                            data-name="" data-placeholder="查询环境:" required>
+                        <option value="is-empty" disabled="" selected="selected">查询环境</option>
+                        <option value="TESTIN">TESTIN</option>
+                        <option value="UATIN">UATIN</option>
+                        <option value="PETIN">PETIN</option>
+                        <option value="PRDIN">PRDIN</option>
+                        <option value="BUGIN">BUGIN</option>
+                    </select>
+
+                </div>
+
+                <div class="form-group">
+                    <label for="s_time" style="padding-left: 10px;">开始时间：</label>
+                    <input class="form-control" type="text" style="padding-left:5px;width: 150px;" id="s_time"
+                           onclick="SetDate(this,'yyyy-MM-dd hh:mm:ss')" readonly="readonly"/>
+                </div>
+                <div class="form-group" style="padding-left: 10px">
+                    <label for="e_time">结束时间：</label>
+                    <input class="form-control" type="text" style="padding-left:5px;width: 150px;" id="e_time"
+                           onclick="SetDate(this,'yyyy-MM-dd hh:mm:ss')" readonly="readonly"/>
+                </div>
+                <button type="button" id="btn-filtertime" class="btn btn-default"
+                        style="padding-left: 10px;width: 70px;height: 34px;" onclick="muti_search()">查询
+                </button>
+
+            </div>
+
+        </form>
+    </div>
+
+    <table data-toggle="table" class="table table-striped table-hover"
+           style="table-layout:inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 0px;"
+           data-toolbar="#toolbar">
+        <thead>
+        <tr>
+            <th>
+                选择
+            </th>
+            <th>
+                ID
+            </th>
+            <th>
+                编码名称
+            </th>
+            <th>
+                编码类型
+            </th>
+            <th>
+                环境
+            </th>
+            <th>
+                发起人
+            </th>
+            <th>
+                发起时间
+            </th>
+            <th>
+                结束时间
+            </th>
+            <th>
+                状态
+            </th>
+        </tr>
+        </thead>
+        <tbody id="muti_result" style="border-radius: 5px">
+
+        </tbody>
+
+    </table>
+    <div><h4></h4></div>
+    <div class="form-group">
+        <div class="form-inline">
+            <label for="target_env" class="row-sm-4 control-label"
+                   style="font-size: medium;">同步到：</label>
+            <div class="form-group">
+
+                <select id="target_env" name="select_env"
+                        class="form-control selectpicker show-tick bs-select-hidden"
+                        data-name="" data-placeholder="同步到:" required>
+                    <option value="is-empty" disabled="" selected="selected">选择环境</option>
+                    <option value="TESTIN">TESTIN</option>
+                    <option value="UATIN">UATIN</option>
+                    <option value="PETIN">PETIN</option>
+                    <option value="PRDIN">PRDIN</option>
+                    <option value="BUGIN">BUGIN</option>
+                </select>
+
+            </div>
+
+        </div>
+
+        <button type="button" class="btn btn-danger"
+                style="margin-left: 0px; margin-top: 8px; width: 80px; height: 35px;" onclick="getselectall()">全选
+        </button>
+        <button type="button" class="btn btn-info"
+                style="margin-left: 10px;  margin-top: 8px; width: 80px;height: 35px;" onclick="unSelectall()">取消全选
+        </button>
+        <button type="button" id="btn-mutisubmit" class="btn btn-primary"
+                style="margin-left: 10px;  margin-top: 8px;  width: 80px;height: 35px;" value="批量提交" onclick="mgmulti_commit()">批量提交
+        </button>
+    </div>
+    <div><h4></h4></div>
+    <div style="text-align:center;">
+        <ul id="btns" class="pagination" style="display:inline-block;">
+
+        </ul>
+    </div>
+{% endblock content %}

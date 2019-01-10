@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% load staticfiles %}
+    <script src="{% static 'user/js/calendar.js' %}"></script>
+    <script src="{% static 'user/js/ddlajax.js' %}"></script>
+    <script src="{% static 'highcharts/highcharts.js' %}"></script>
+    <script src="{% static 'highcharts/modules/exporting.js' %}"></script>
+    <script src="{% static 'highcharts/modules/data.js' %}"></script>
+    <script src="{% static 'highcharts/themes/grid-light.js' %}"></script>
+    <h4 style="font-family: 'Microsoft YaHei UI';color: #2aabd2">| <span style="color: #0f0f0f">开发环境DDL统计：</span></h4>
+    <div style="width:100%; height:2px; border-top:1px solid #d5d5d5; clear:both;margin-top: 18px;margin-bottom: 15px;"></div>
+    <form id="form-ddl" class="form-inline" role="form">
+
+        {% csrf_token %}
+        <div class="panel" style="width: 100%;height: 100%;padding-bottom: 15px">
+            <div class="form-group">
+                <label for="s_time">开始时间：</label>
+                <input class="form-control" type="text" style="padding-left:5px;width: 150px;" id="s_time"
+                       onclick="SetDate(this,'yyyy-MM-dd hh:mm:ss')" readonly="readonly"/>
+            </div>
+            <div class="form-group" style="padding-left: 20px">
+                <label for="e_time">结束时间：</label>
+                <input class="form-control" type="text" style="padding-left:5px;width: 150px;" id="e_time"
+                       onclick="SetDate(this,'yyyy-MM-dd hh:mm:ss')" readonly="readonly"/>
+            </div>
+            <button type="button" id="btn-ddltime" class="btn btn-default"
+                    style="padding-left: 10px;width: 70px;height: 34px;" onclick="committime()">查询
+            </button>
+            <span style="margin-left: 30px;color: #999999">默认查询7天(上周六00:00 -- 本周五24:00)</span>
+
+        </div>
+
+    </form>
+    <div>
+        <table id="ddltable" class="table table-bordered table-hover" style="width: 450px;display: none">
+            <thead style="display: table-header-group">
+            <tr style="background-color: #f5f6fa;font-size: 10px;color: #8c8c8c">
+                <th style="width: 60px;">数据库名</th>
+                <th style="width: 35px;">创建表</th>
+                <th style="width: 35px;">修改表</th>
+            </tr>
+            </thead>
+            <div id="container" style="min-width: 310px; height: 400px; margin: 0 auto;display: none"></div>
+            <tbody>
+
+
+            </tbody>
+
+        </table>
+
+
+    </div>
+
+    <div class="col-sm-10" style="background-color:#ec971f;height: 100%">
+        level 1 of column
+        <div class="row">
+        <div class="col-sm-6" style="background-color:#ac2925;height: 60px;">level 2</div>
+        <div class="col-sm-6" style="background-color:#28a4c9;height: 60px;">level 2</div>
+        </div>
+    </div>
+{% endblock content %}
