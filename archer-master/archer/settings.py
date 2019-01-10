@@ -140,8 +140,7 @@ LOCK_TIME_THRESHOLD = 300
 # 账户登录失败 几次 锁账户
 LOCK_CNT_THRESHOLD = 5
 
-#LDAP配置
-# LDAP
+#LDAP配置,是否启用ldap认证
 ENABLE_LDAP = True
 
 # LOG配置
