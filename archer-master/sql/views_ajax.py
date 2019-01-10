@@ -1469,7 +1469,7 @@ def mgmuti(request):
 
 # SQL工单跳过inception执行回调
 def execute_skip_inception(workflowId, instance_name, db_name, sql_content, url):
-    # workflowDetail = workflow.objects.get(id=workflowId)
+    workflowDetail = workflow.objects.get(id=workflowId)
     try:
         # 执行sql
         t_start = time.time()
