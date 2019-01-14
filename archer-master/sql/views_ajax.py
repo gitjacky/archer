@@ -1508,5 +1508,5 @@ def execute_skip_inception(workflowId, instance_name, db_name, sql_content, url)
     except Exception:
         logger.error(traceback.format_exc())
 
-        # 发送消息
-        # _mail(request, rel_version, title_prefix, engineer, deploy_env, release_name, execute_status)
+        #发送消息
+        #_mail(request, rel_version, title_prefix, engineer, deploy_env, release_name, execute_status)
