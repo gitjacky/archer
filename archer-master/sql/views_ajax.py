@@ -200,7 +200,6 @@ def simplecheck(request):
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
     # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
     list_result = [list(x) for x in result]
-    print(list_result)
     sql_str = len(list_result)
     latest_re = 'latest_time'
     create_re = r'create\s+table'
@@ -220,7 +219,7 @@ def simplecheck(request):
             else:
                 if list_result[i][2] == 2:
                     if instead_result:
-                        list_result[i][2] = 3
+                        list_result[i][2] = 3  #编号3表示inception不支持SQL，脚本由人工审核，人工执行
                         list_result[i][4] = "Warning,This SQL will be executed in manual!"
                     else:
                         pass

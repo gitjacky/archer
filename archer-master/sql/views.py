@@ -181,15 +181,23 @@ def autoreview(request):
     #遍历result，看是否有任何自动审核不通过的地方，一旦有，则为自动审核不通过；没有的话，则为等待人工审核状态
     workflowStatus = Const.workflowStatus['manreviewing']
     audit_status = 0
-    for row in result:
-        if row[2] == 2:
-            #状态为2表示严重错误，必须修改
-            workflowStatus = Const.workflowStatus['autoreviewwrong']
-            audit_status = 1
-            context = {"audit_status":1,'errMsg': '自动审核不通过无法提交，请检查脚本内容!'}
-            return render(request, 'error.html', context)
-            break
-        elif re.match(r"\w*comments\w*", row[4]):
+    list_result = [list(x) for x in result]
+    sql_str = len(list_result)
+    for row in range(sql_str):
+        if list_result[row][2] == 2:
+            instead_re = 'instead.'
+            instead_result = re.search(instead_re, list_result[row][4], flags=re.IGNORECASE)
+            if instead_result:
+                list_result[row][2] = 3  # 编号3表示inception不支持SQL，脚本由人工审核，人工执行
+                list_result[row][4] = "Warning,This SQL will be executed in manual!"
+            else:
+                #状态为2表示严重错误，必须修改
+                workflowStatus = Const.workflowStatus['autoreviewwrong']
+                audit_status = 1
+                context = {"audit_status":1,'errMsg': '自动审核不通过无法提交，请检查脚本内容!'}
+                return render(request, 'error.html', context)
+                break
+        elif re.match(r"\w*comments\w*", list_result[row][4]):
             workflowStatus = Const.workflowStatus['autoreviewwrong']
             audit_status = 1
             context = {"audit_status":1,'errMsg': '自动审核不通过无法提交，请检查脚本内容!'}
@@ -197,6 +205,10 @@ def autoreview(request):
             break
         else:
             audit_status = 0
+    if list_result:
+        jsonResult = json.dumps(tuple([tuple(i) for i in list_result]))
+    else:
+        pass
 
     #如果自动审核通过，则将数据存进数据库里
     if audit_status == 0:
