@@ -200,13 +200,16 @@ def simplecheck(request):
         return HttpResponse(json.dumps(finalResult), content_type='application/json')
     # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
     list_result = [list(x) for x in result]
+    print(list_result)
     sql_str = len(list_result)
     latest_re = 'latest_time'
     create_re = r'create\s+table'
+    instead_re = 'instead.'
     for i in range(sql_str):
         if i > 0:
             create_result = re.search(create_re, list_result[i][5], flags=re.IGNORECASE)
             latest_result = re.search(latest_re, list_result[i][5], flags=re.IGNORECASE)
+            instead_result = re.search(instead_re, list_result[i][4], flags=re.IGNORECASE)
             if create_result and latest_result:
                 print("ok")
             elif create_result and not latest_result:
@@ -215,7 +218,15 @@ def simplecheck(request):
                 else:
                     list_result[i][4] = list_result[i][4] + "\nPlease add public column latest_time."
             else:
-                print("not create")
+                if list_result[i][2] == 2:
+                    if instead_result:
+                        list_result[i][2] = 3
+                        list_result[i][4] = "Warning,This SQL will be executed in manual!"
+                    else:
+                        pass
+
+                else:
+                    pass
         else:
             pass
     finalResult['data'] = list_result
