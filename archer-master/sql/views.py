@@ -2,8 +2,11 @@
 import re
 import json
 import time
+import copy
 import logging,traceback
 from collections import OrderedDict
+from django.db import connection
+from threading import Thread
 
 from django.db.models import Q
 from django.conf import settings
@@ -145,7 +148,7 @@ def submitsql(request):
     context = {'currentMenu':'allworkflow', 'dictAllClusterDb':dictAllClusterDb, 'reviewMen':reviewMen}
     return render(request, 'submitSql.html', context)
 
-#提交SQL给inception进行解析
+#提交SQL工单，并交给inception进行解析
 def autoreview(request):
     workflowid = request.POST.get('workflowid')
     sqlContent = request.POST['sql_content']
@@ -183,6 +186,23 @@ def autoreview(request):
     audit_status = 0
     list_result = [list(x) for x in result]
     sql_str = len(list_result)
+
+    engineer = request.session.get('login_username', False)
+    # 检查是否已存在待审核数据
+    work_obj = workflow.objects.filter(workflow_name=workflowName, engineer=engineer,
+                                       cluster_name=clusterName,
+                                       status=Const.workflowStatus['manreviewing'])
+    if len(work_obj) >= 1:
+        msg = '该工单已存在且当前状态为待审核，请勿重复提交!'
+        context = {'errMsg': msg}
+        return render(request, "error.html", context)
+    else:
+        if not workflowid:
+            Workflow = workflow()
+            Workflow.create_time = getNow()
+        else:
+            Workflow = workflow.objects.get(id=int(workflowid))
+
     for row in range(sql_str):
         if list_result[row][2] == 2:
             instead_re = 'instead.'
@@ -190,19 +210,18 @@ def autoreview(request):
             if instead_result:
                 list_result[row][2] = 3  # 编号3表示inception不支持SQL，脚本由人工审核，人工执行
                 list_result[row][4] = "Warning,This SQL will be executed in manual!"
+                Workflow.is_manual = 1
             else:
                 #状态为2表示严重错误，必须修改
                 workflowStatus = Const.workflowStatus['autoreviewwrong']
                 audit_status = 1
                 context = {"audit_status":1,'errMsg': '自动审核不通过无法提交，请检查脚本内容!'}
                 return render(request, 'error.html', context)
-                break
         elif re.match(r"\w*comments\w*", list_result[row][4]):
             workflowStatus = Const.workflowStatus['autoreviewwrong']
             audit_status = 1
             context = {"audit_status":1,'errMsg': '自动审核不通过无法提交，请检查脚本内容!'}
             return render(request, 'error.html', context)
-            break
         else:
             audit_status = 0
     if list_result:
@@ -212,22 +231,6 @@ def autoreview(request):
 
     #如果自动审核通过，则将数据存进数据库里
     if audit_status == 0:
-        engineer = request.session.get('login_username', False)
-        # 检查是否已存在待审核数据
-        work_obj = workflow.objects.filter(workflow_name=workflowName,engineer=engineer,
-                                           cluster_name=clusterName,
-                                           status=Const.workflowStatus['manreviewing'])
-        if len(work_obj) >= 1:
-            msg = '该工单已存在且当前状态为待审核，请勿重复提交!'
-            context = {'errMsg': msg}
-            return render(request,"error.html",context)
-        else:
-            if not workflowid:
-                Workflow = workflow()
-                Workflow.create_time = getNow()
-            else:
-                Workflow = workflow.objects.get(id=int(workflowid))
-
         Workflow.workflow_name = workflowName
         Workflow.engineer = engineer
         Workflow.review_man = json.dumps(listAllReviewMen, ensure_ascii=False)
@@ -322,28 +325,36 @@ def execute(request):
         context = {'errMsg': '当前工单状态不是等待人工审核中，请刷新当前页面！'}
         return render(request, 'error.html', context)
 
-    dictConn = getMasterConnStr(clusterName)
-   
-    #将流程状态修改为执行中，并更新reviewok_time字段
+    dictConn = dao.getMasterConnStr(clusterName)
+
+    # 将流程状态修改为执行中，并更新reviewok_time字段
     workflowDetail.review_man = loginUser
     workflowDetail.status = Const.workflowStatus['executing']
     workflowDetail.reviewok_time = getNow()
-    #执行之前重新split并check-遍，更新SHA1缓存;为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
-    splitReviewResult = inceptionDao.sqlautoReview(workflowDetail.sql_content,workflowDetail.cluster_name,isSplit='yes')
-    workflowDetail.review_content = json.dumps(splitReviewResult)
-    workflowDetail.save()
+    sqlContent = workflowDetail.sql_content
 
-    #交给inception先split，再执行
-    (finalStatus, finalList) = inceptionDao.executeFinal(workflowDetail, dictConn)
+    if workflowDetail.is_manual:
+        # 采取异步回调的方式执行语句，防止出现持续执行中的异常
+        t = Thread(target=execute_manual,
+                   args=(workflowId, clusterName, sqlContent, loginUser,))
+        t.setDaemon(True)
+        t.start()
+        t.join()
+    else:
+        # 执行之前重新split并check-遍，更新SHA1缓存;为如果在执行中，其他进程去做这一步操作的话，会导致inception core dump挂掉
+        splitReviewResult = inceptionDao.sqlautoReview(workflowDetail.sql_content,workflowDetail.cluster_name,isSplit='yes')
+        workflowDetail.review_content = json.dumps(splitReviewResult)
+        workflowDetail.save()
 
-    #封装成JSON格式存进数据库字段里
-    strJsonResult = json.dumps(finalList)
-    workflowDetail.execute_result = strJsonResult
-    workflowDetail.finish_time = getNow()
-    workflowDetail.status = finalStatus
-    workflowDetail.save()
-    
-    sqlContent = workflowDetail.sql_content 
+        #交给inception先split，再执行
+        (finalStatus, finalList) = inceptionDao.executeFinal(workflowDetail, dictConn)
+
+        #封装成JSON格式存进数据库字段里
+        strJsonResult = json.dumps(finalList)
+        workflowDetail.execute_result = strJsonResult
+        workflowDetail.finish_time = getNow()
+        workflowDetail.status = finalStatus
+        workflowDetail.save()
 
     #如果执行完毕了，则根据settings.py里的配置决定是否给提交者和DBA一封邮件提醒.DBA需要知晓审核并执行过的单子
     if hasattr(settings, 'MAIL_ON_OFF') == True:
@@ -374,7 +385,7 @@ def execute(request):
             #不发邮件
             pass
 
-    return HttpResponseRedirect('/detail/' + str(workflowId) + '/') 
+    return HttpResponseRedirect('/detail/' + str(workflowId) + '/')
 
 #终止流程
 def cancel(request):
@@ -473,17 +484,6 @@ def dbaprinciples(request):
 def charts(request):
     context = {'currentMenu':'charts'}
     return render(request, 'charts.html', context)
-
-#根据集群名获取主库连接字符串，并封装成一个dict
-def getMasterConnStr(clusterName):
-    listMasters = master_config.objects.filter(cluster_name=clusterName)
-    
-    masterHost = listMasters[0].master_host
-    masterPort = listMasters[0].master_port
-    masterUser = listMasters[0].master_user
-    masterPassword = prpCryptor.decrypt(listMasters[0].master_password)
-    dictConn = {'masterHost':masterHost, 'masterPort':masterPort, 'masterUser':masterUser, 'masterPassword':masterPassword}
-    return dictConn
 
 #获取当前时间
 def getNow():
@@ -716,3 +716,69 @@ def parameter_config(request):
     #            'config': sys_config, 'WorkflowDict': WorkflowDict}
     context = {'config': sys_config}
     return render(request, 'config.html', context)
+
+# SQL工单跳过inception执行回调
+def execute_manual(workflowId,clusterName,sql,loginuser):
+    workflowobj = workflow.objects.get(id=workflowId)
+
+    try:
+        # 执行sql
+        execute_result = dao.mysql_execute(clusterName,sql)
+
+        sql_execute_result = copy.deepcopy(json.loads(workflowobj.review_content))
+        workflowobj.status = Const.workflowStatus['executing']
+        workflowobj.save()
+        for i,j in enumerate(sql_execute_result):
+            if i <= len(execute_result):
+                # print(sql_execute_result[i],execute_result[i][0],execute_result[i][1])
+                if j[0] == 1 and i in execute_result and execute_result[0][1]:
+                    j[1] = "RETURN"
+                    j[3] = "Execute Successfully"
+                    # 影响行数
+                    j[6] = execute_result[i][0]
+                    # 执行时间str
+                    j[9] = execute_result[i][2]
+                elif j[0] > 1 and i in execute_result and isinstance(execute_result[i][1],int):
+                    j[1] = "EXECUTED"
+                    j[3] = "Execute Successfully"
+                    # 影响行数
+                    j[6] = execute_result[i][0]
+                    # 执行时间str
+                    j[9] = execute_result[i][2]
+                elif j[0] > 1 and i in execute_result and isinstance(execute_result[i][1],str):
+                    #显示报错信息
+                    j[1] = "EXECUTED"
+                    j[2] = 2
+                    j[3] = "Execute failed"
+                    j[4] = ''.join(execute_result[i])
+                    break
+                else:
+                    break
+            else:
+                pass
+
+        print(sql_execute_result)
+        fail_count = 0
+        for k in sql_execute_result:
+            if re.search('failed', k[3],flags=re.IGNORECASE):
+                fail_count = fail_count + 1
+            else:
+                pass
+        if fail_count > 0:
+            workflowobj.status = Const.workflowStatus['exception']
+        else:
+            workflowobj.status = Const.workflowStatus['finish']
+        workflowobj.finish_time = getNow()
+        # workflowobj.review_content = ''
+        print(sql_execute_result)
+        workflowobj.execute_result = json.dumps(sql_execute_result)
+        workflowobj.review_man = loginuser
+        workflowobj.is_backup = '否'
+        # 关闭后重新获取连接，防止超时
+        connection.close()
+        workflowobj.save()
+
+        return True
+    except Exception as e:
+        logger.error(traceback.format_exc())
+        return e

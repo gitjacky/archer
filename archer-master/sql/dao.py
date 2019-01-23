@@ -4,6 +4,9 @@ import MySQLdb
 
 from django.db import connection
 import logging,traceback
+from .models import master_config
+from .aes_decryptor import Prpcrypt
+import time
 
 logger = logging.getLogger('default')
 
@@ -35,7 +38,7 @@ class Dao(object):
                 conn.close()
         return listDb
 
-    def getWorkChartsByMonth(self):
+    def getWorkChartsByMonth(self,sql):
         cursor = connection.cursor()
         sql = "select date_format(create_time, '%%m-%%d'),count(*) from sql_workflow where create_time>=date_add(now(),interval -%s day) group by date_format(create_time, '%%m-%%d') order by 1 asc;" % (Dao._CHART_DAYS)
         cursor.execute(sql)
@@ -61,24 +64,50 @@ class Dao(object):
         engineers = {}
         alter_result = workflow.objects.filter(cluster_name='DEV环境',status='已正常结束',sql_content__icontains='alter')
 
+
+    # 根据集群名获取主库连接字符串，并封装成一个dict
+    def getMasterConnStr(self,clusterName):
+        listMasters = master_config.objects.filter(cluster_name=clusterName)
+
+        masterHost = listMasters[0].master_host
+        masterPort = listMasters[0].master_port
+        masterUser = listMasters[0].master_user
+        masterPassword = Prpcrypt().decrypt(listMasters[0].master_password)
+        dictConn = {'masterHost': masterHost, 'masterPort': masterPort, 'masterUser': masterUser,
+                    'masterPassword': masterPassword}
+        return dictConn
+
     # 连进指定的mysql实例里，执行sql并返回
-    def mysql_execute(self, db_name, sql):
+    def mysql_execute(self,clustername,sql):
         result = {}
+        dictConn = self.getMasterConnStr(clustername)
         try:
-            conn = MySQLdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=db_name,
+            conn = MySQLdb.connect(host=dictConn['masterHost'], port=dictConn['masterPort'], user=dictConn['masterUser'], passwd=dictConn['masterPassword'],
                                    charset='utf8')
             cursor = conn.cursor()
-            effect_row = cursor.execute(sql)
-            # result = {}
-            # result['effect_row'] = effect_row
-            conn.commit()
-        except MySQLdb.Warning as w:
+            sql_list = [e_sql for e_sql in sql.split('\n') if e_sql != '' and e_sql != '\r']
+            try:
+                for i,v in enumerate(sql_list):
+                    t_start = time.time()
+                    cursor.execute(v)
+                    result[i] = cursor.rowcount
+                    result[i] = [result[i], bool(cursor._executed)]
+                    conn.commit()
+                    t_end = time.time()
+                    execute_time = "%5s" % "{:.4f}".format(t_end - t_start)
+                    result[i].append(execute_time)
+            except Exception as e:
+                conn.rollback()
+                print(type(e),str(e))
+                result[i] = (str(e)).split(',')
+
+            finally:
+                cursor.close()
+                conn.close()
+
+        except Exception as e:
             logger.error(traceback.format_exc())
-            result['Warning'] = str(w)
-        except MySQLdb.Error as e:
-            logger.error(traceback.format_exc())
-            result['Error'] = str(e)
-        else:
-            cursor.close()
-            conn.close()
+            result = e
+
         return result
+

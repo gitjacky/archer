@@ -73,6 +73,8 @@ class workflow(models.Model):
     reviewok_time = models.DateTimeField('人工审核通过的时间', null=True, blank=True)
     sql_content = models.TextField('具体sql内容')
     execute_result = models.TextField('执行结果的JSON格式')
+    is_manual = models.IntegerField('是否跳过inception', choices=((0, '否'), (1, '是')), default=0)
+
 
     def __str__(self):
         return self.workflow_name

@@ -152,7 +152,7 @@ function stopOsc(wid, sqlNum){
             },
             success: function (data) {
                 // console.log(data);
-                if (data.status == 0) {
+                if (data.status === 0) {
                     //改变全局变量isStoped的值，以便停止进度条更新
                     isStoped = 1;
                 }
@@ -197,7 +197,22 @@ function execute(){
         window.location.reload(true);
     },2500)
 
-    };
+    }
+
+$("#btnmanual").click(function () {
+    document.getElementById("workflowDetail_status").innerHTML = "确认中...";
+    if (retryCnt <= 120) {
+        clearTimeout(key);
+        key = setTimeout(function () {
+            get_pct(wid, itemIndex);
+        }, 1000);
+        retryCnt++;
+    }
+    else {
+        retryCnt = 1;
+        alert("该工单2分钟仍然未执行完毕，请稍后尝试手动刷新本页面");
+    }
+});
 
 //处理"重新修改"按钮，即工单被终止后再次进行修改使用，将要修改的工单内容保存到客户端session中。Jacky
 $(document).ready(function () {

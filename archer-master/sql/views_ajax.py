@@ -6,8 +6,6 @@ import datetime
 import logging, traceback
 from collections import OrderedDict
 import ldap
-import time
-from django.db import connection
 
 from django.db.models import Q
 from django.conf import settings
@@ -27,7 +25,7 @@ from .inception import InceptionDao
 from .aes_decryptor import Prpcrypt
 from .models import users, master_config, workflow, workrelease, detailrecords, rel_memo, mongo_config, mogocode, \
     mongolog
-from .views import getMasterConnStr, getNow, _getDetailUrl
+from .views import getNow, _getDetailUrl
 from .ddl_count import DDL_COUNT
 from django.db import transaction
 from .mogo_sync import SyncSc
@@ -694,7 +692,7 @@ def relsexecute(request):
         context = {'errMsg': '当前工单状态不是等待人工审核中，请刷新当前页面！'}
         return render(request, 'error.html', context)
 
-    dictConn = getMasterConnStr(clusterName)
+    dictConn = dao.getMasterConnStr(clusterName)
 
     # 将流程状态修改为执行中，并更新reviewok_time字段
     detailObj.status = Const.workflowStatus['executing']
@@ -1475,37 +1473,3 @@ def mgmuti(request):
         context = {'status': '提交失败！'}
 
     return JsonResponse(context)
-
-
-# SQL工单跳过inception执行回调
-def execute_skip_inception(workflowId, instance_name, db_name, sql_content, url):
-    workflowDetail = workflow.objects.get(id=workflowId)
-    try:
-        # 执行sql
-        t_start = time.time()
-        execute_result = Dao(instance_name=instance_name).mysql_execute(db_name, sql_content)
-        t_end = time.time()
-        execute_time = "%5s" % "{:.4f}".format(t_end - t_start)
-        execute_result['execute_time'] = execute_time + 'sec'
-
-        workflowDetail = workflow.objects.get(id=workflowId)
-        if execute_result.get('Warning'):
-            workflowDetail.status = Const.workflowStatus['exception']
-        elif execute_result.get('Error'):
-            workflowDetail.status = Const.workflowStatus['exception']
-        else:
-            workflowDetail.status = Const.workflowStatus['finish']
-        workflowDetail.finish_time = getNow()
-        # workflowDetail.review_content =
-        workflowDetail.execute_result = json.dumps(execute_result)
-        workflowDetail.is_manual = 1
-        workflowDetail.audit_remark = ''
-        workflowDetail.is_backup = '否'
-        # 关闭后重新获取连接，防止超时
-        connection.close()
-        workflowDetail.save()
-    except Exception:
-        logger.error(traceback.format_exc())
-
-        #发送消息
-        #_mail(request, rel_version, title_prefix, engineer, deploy_env, release_name, execute_status)

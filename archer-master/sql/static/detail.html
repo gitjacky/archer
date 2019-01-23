@@ -155,12 +155,19 @@
         </tbody>
     </table>
     {% if workflowDetail.status == '等待DBA审核' %}
-        {% if loginUser in listAllReviewMen %}
+        {% if loginUser in listAllReviewMen and not workflowDetail.is_manual %}
             <form action="/execute/" method="post" style="display:inline-block;">
                 {% csrf_token %}
                 <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
                 <input type="submit" id="btnExecute" type="button" onclick="execute()"
                        class="btn btn-primary btn-default" data-loading-text="Loading..." value="通过并执行"/>
+            </form>
+        {% elif loginUser in listAllReviewMen and workflowDetail.is_manual %}
+            <form action="/execute/" method="post" style="display:inline-block;">
+                {% csrf_token %}
+                <input type="hidden" name="workflowid" value="{{ workflowDetail.id }}">
+                <input type="submit" id="btnmanual" type="button"
+                       class="btn btn-primary btn-default" data-loading-text="Loading..." value="手工执行"/>
             </form>
         {% endif %}
 
