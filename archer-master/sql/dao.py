@@ -98,7 +98,6 @@ class Dao(object):
                     result[i].append(execute_time)
             except Exception as e:
                 conn.rollback()
-                print(type(e),str(e))
                 result[i] = (str(e)).split(',')
 
             finally:
