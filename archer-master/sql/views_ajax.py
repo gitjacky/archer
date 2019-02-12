@@ -1338,21 +1338,20 @@ def codesearch(request):
         all_sources = []
         if code_list:
             for x in code_list:
-                print(x)
                 if 'service' in x and x['service']:
-                    all_sources.append("<br>" + str(x['service']) + "<br>")
+                    all_sources.append("<b>Service:</b><br>" + str(x['service']) + "<br><br>")
                 elif 'flow' in x and x['flow']:
-                    all_sources.append("<br>" + str(x['flow']) + "<br>")
+                    all_sources.append("<b>flow:</b><br>" + str(x['flow']) + "<br><br>")
                 elif 'flow2' in x and x['flow2']:
-                    all_sources.append("<br>" + str(x['flow2']) + "<br>")
+                    all_sources.append("<b>flow:</b><br>" + str(x['flow2']) + "<br><br>")
                 elif 'resource' in x and x['resource']:
-                    all_sources.append("<br>" + str(x['resource']) + "<br>")
+                    all_sources.append("<b>resource:</b><br>" + str(x['resource']) + "<br><br>")
                 elif 'sysinfo' in x and x['sysinfo']:
-                    all_sources.append("<br>" + str(x['sysinfo']) + "<br>")
+                    all_sources.append("<b>sysInfo:</b><br>" + str(x['sysinfo']) + "<br><br>")
                 elif 'tssTimer' in x and x['tssTimer']:
-                    all_sources.append("<br>" + str(x['tssTimer']) + "<br>")
+                    all_sources.append("<b>tssTimer:</b><br>" + str(x['tssTimer']) + "<br><br>")
                 elif 'mQQueue' in x and x['mQQueue']:
-                    all_sources.append("<br>" + str(x['mQQueue']) + "<br>")
+                    all_sources.append("<b>mQQueue:</b><br>" + str(x['mQQueue']) + "<br><br>")
                 else:
                     pass
             else:

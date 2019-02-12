@@ -38,7 +38,7 @@ class Dao(object):
                 conn.close()
         return listDb
 
-    def getWorkChartsByMonth(self,sql):
+    def getWorkChartsByMonth(self):
         cursor = connection.cursor()
         sql = "select date_format(create_time, '%%m-%%d'),count(*) from sql_workflow where create_time>=date_add(now(),interval -%s day) group by date_format(create_time, '%%m-%%d') order by 1 asc;" % (Dao._CHART_DAYS)
         cursor.execute(sql)

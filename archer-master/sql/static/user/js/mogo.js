@@ -349,12 +349,10 @@ function codesearch() {
             $ss_list.css('display', '');
             $ss_list.empty();
 
-            var s_list = [];
             if (all_source === undefined || all_source.length === 0) {
                 $ss_list.append("编码不存在!")
             } else {
                 for (var i = 0; i < all_source.length; i++) {
-                    s_list.push(all_source[i]);
                     var one_html = '<span class="text-justify" style="font-size: medium">' + all_source[i] + '</span>';
                     $ss_list.append(one_html);
                 }
