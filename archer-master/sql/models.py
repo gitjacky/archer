@@ -121,6 +121,7 @@ class detailrecords(models.Model):
     sql_content = models.TextField(verbose_name='具体sql内容')
     is_backup = models.CharField('是否备份', choices=(('否','否'),('是','是')), max_length=20)
     execute_result = models.TextField(verbose_name='执行结果的JSON格式')
+    is_manual = models.IntegerField('是否跳过inception', choices=((0, '否'), (1, '是')), default=0)
 
     def __str__(self):
         return str(self.release_version)

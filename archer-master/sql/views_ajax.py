@@ -6,6 +6,7 @@ import datetime
 import logging, traceback
 from collections import OrderedDict
 import ldap
+from threading import Thread
 
 from django.db.models import Q
 from django.conf import settings
@@ -581,29 +582,33 @@ def relautoreview(request):
 
     # 遍历result，看是否有任何自动审核不通过的地方，一旦有，则为自动审核不通过；没有的话，则为等待人工审核状态
 
-    for row in result:
-        if row[2] == 2:
-            # 状态为2表示严重错误，必须修改
+    instead_re = 'instead.'
+    list_result = [list(x) for x in result]
+
+    for k, v in enumerate(list_result):
+        if v[2] == 2:      # 状态为2表示严重错误，必须修改
+            instead_result = re.search(instead_re, v[4], flags=re.IGNORECASE)
+            if instead_result:
+                v[2] = 3  # 编号3表示inception不支持SQL，脚本由人工审核，人工执行
+                v[4] = "Warning,This SQL will be executed in manual!"
+                detailrec_obj.is_manual = 1
+                finalResult['data'] = list_result
+            else:
+                detailrec_obj.status = Const.workflowStatus['autoreviewwrong']
+                context = {'autoaudit_status': detailrec_obj.status}
+                finalResult['record_status'] = Const.workflowStatus['autoreviewwrong']
+
+            # break
+        elif re.match(r"\w*comments\w*", v[4]):
+            print("row[4]" + v[4])
             detailrec_obj.status = Const.workflowStatus['autoreviewwrong']
             context = {'autoaudit_status': detailrec_obj.status}
-            finalResult['record_status'] = Const.workflowStatus['autoreviewwrong']
-            # return JsonResponse(context)
-            # break
-        elif re.match(r"\w*comments\w*", row[4]):
-            print("row[4]:" + row[4])
-            detailrec_obj.status = Const.workflowStatus['autoreviewwrong']
-            context = {'autoaudit_status': detailrec_obj.status}
-            # return JsonResponse(context)
-            # break
 
     # 要把result转成JSON存进数据库里，方便SQL单子详细信息展示
-    jsonResult = json.dumps(result)
+    jsonResult = json.dumps(list_result)
     detailrec_obj.review_content = jsonResult
     detailrec_obj.save()
     return JsonResponse(finalResult)
-    # context = {'autoaudit_status': detailrec_obj.status}
-    # return JsonResponse(context)
-
 
 # 版本sql详情页面查看详情信息(jacky)
 @csrf_exempt
@@ -699,15 +704,23 @@ def relsexecute(request):
     detailObj.reviewok_time = getNow()
     detailObj.save()
 
-    # 交给inception先split，再执行
-    (finalStatus, finalList) = inceptionDao.executeFinal(detailObj, dictConn)
+    if detailObj.is_manual:
+        # 采取异步回调的方式执行语句，防止出现持续执行中的异常
+        t = Thread(target=dao.execute_manual,
+                   args=(detailrecords, detailId, clusterName, detailObj.sql_content, loginUser,))
+        t.setDaemon(True)
+        t.start()
+        t.join()
+    else:
+        # 交给inception先split，再执行
+        (finalStatus, finalList) = inceptionDao.executeFinal(detailObj, dictConn)
 
-    # 封装成JSON格式存进数据库字段里
-    strJsonResult = json.dumps(finalList)
-    detailObj.execute_result = strJsonResult
-    detailObj.finish_time = getNow()
-    detailObj.status = finalStatus
-    detailObj.save()
+        # 封装成JSON格式存进数据库字段里
+        strJsonResult = json.dumps(finalList)
+        detailObj.execute_result = strJsonResult
+        detailObj.finish_time = getNow()
+        detailObj.status = finalStatus
+        detailObj.save()
 
     # 检查本版本号中所有子脚本执行状态，然后更新版本记录的执行状态
     workrel = get_object_or_404(workrelease, id=detailObj.release_version.id)
@@ -1339,7 +1352,7 @@ def codesearch(request):
         if code_list:
             for x in code_list:
                 if 'service' in x and x['service']:
-                    all_sources.append("<b>Service:</b><br>" + str(x['service']) + "<br><br>")
+                    all_sources.append("<b>service:</b><br>" + str(x['service']) + "<br><br>")
                 elif 'flow' in x and x['flow']:
                     all_sources.append("<b>flow:</b><br>" + str(x['flow']) + "<br><br>")
                 elif 'flow2' in x and x['flow2']:

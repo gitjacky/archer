@@ -351,8 +351,8 @@ def execute(request):
 
     if workflowDetail.is_manual:
         # 采取异步回调的方式执行语句，防止出现持续执行中的异常
-        t = Thread(target=execute_manual,
-                   args=(workflowId, clusterName, sqlContent, loginUser,))
+        t = Thread(target=dao.execute_manual,
+                   args=(workflow, workflowId, clusterName, sqlContent, loginUser,))
         t.setDaemon(True)
         t.start()
         t.join()
@@ -755,67 +755,3 @@ def parameter_config(request):
     #            'config': sys_config, 'WorkflowDict': WorkflowDict}
     context = {'config': sys_config}
     return render(request, 'config.html', context)
-
-
-# SQL工单跳过inception执行回调
-def execute_manual(workflowId, clusterName, sql, loginuser):
-    workflowobj = workflow.objects.get(id=workflowId)
-
-    try:
-        # 执行sql
-        execute_result = dao.mysql_execute(clusterName, sql)
-        sql_execute_result = copy.deepcopy(json.loads(workflowobj.review_content))
-        workflowobj.status = Const.workflowStatus['executing']
-        workflowobj.save()
-        for i, j in enumerate(sql_execute_result):
-            if i <= len(execute_result):
-                if j[0] == 1 and i in execute_result and execute_result[0][1]:
-                    j[1] = "RETURN"
-                    j[3] = "Execute Successfully"
-                    # 影响行数
-                    j[6] = execute_result[i][0]
-                    # 执行时间str
-                    j[9] = execute_result[i][2]
-                elif j[0] > 1 and i in execute_result and isinstance(execute_result[i][1], int):
-                    j[1] = "EXECUTED"
-                    j[3] = "Execute Successfully"
-                    # 影响行数
-                    j[6] = execute_result[i][0]
-                    # 执行时间str
-                    j[9] = execute_result[i][2]
-                elif j[0] > 1 and i in execute_result and isinstance(execute_result[i][1], str):
-                    # 显示报错信息
-                    j[1] = "EXECUTED"
-                    j[2] = 2
-                    j[3] = "Execute failed"
-                    j[4] = ''.join(execute_result[i])
-                    break
-                else:
-                    break
-            else:
-                pass
-
-        print(sql_execute_result)
-        fail_count = 0
-        for k in sql_execute_result:
-            if re.search('failed', k[3], flags=re.IGNORECASE):
-                fail_count = fail_count + 1
-            else:
-                pass
-        if fail_count > 0:
-            workflowobj.status = Const.workflowStatus['exception']
-        else:
-            workflowobj.status = Const.workflowStatus['finish']
-        workflowobj.finish_time = getNow()
-        print(sql_execute_result)
-        workflowobj.execute_result = json.dumps(sql_execute_result)
-        workflowobj.review_man = loginuser
-        workflowobj.is_backup = '否'
-        # 关闭后重新获取连接，防止超时
-        connection.close()
-        workflowobj.save()
-
-        return True
-    except Exception as e:
-        logger.error(traceback.format_exc())
-        return e
