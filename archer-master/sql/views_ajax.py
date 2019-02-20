@@ -600,7 +600,7 @@ def relautoreview(request):
 
             # break
         elif re.match(r"\w*comments\w*", v[4]):
-            print("row[4]" + v[4])
+            print("v[4]" + v[4])
             detailrec_obj.status = Const.workflowStatus['autoreviewwrong']
             context = {'autoaudit_status': detailrec_obj.status}
 
