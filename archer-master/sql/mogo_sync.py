@@ -173,7 +173,7 @@ class SyncSc(object):
                                 sys_dicts[i_count] = i
 
 
-                            #目地环境若存在类似的url
+                            #目的环境若存在类似的url
                             sys_urls = []
                             syss = {}
                             if sys_dicts:
@@ -195,9 +195,9 @@ class SyncSc(object):
                                     my_choice = list(syss.keys())[list(syss.values()).index(self.url_choice)]
                                     n_sysid = my_choice
                             else:
-                                #print(("%s%s") % ("提示：目地环境还没有类似sysInfo,请手工先插入对应sysInfo记录后再运行本脚本！",'\n'))
+                                #print(("%s%s") % ("提示：目的环境还没有类似sysInfo,请手工先插入对应sysInfo记录后再运行本脚本！",'\n'))
                                 os.remove(file_name)
-                                return("提示：目地环境还没有类似sysInfo,请手工插入对应sysInfo后再同步！")
+                                return("提示：目的环境还没有类似sysInfo,请手工插入对应sysInfo后再同步！")
 
                                 # exit(0)
 

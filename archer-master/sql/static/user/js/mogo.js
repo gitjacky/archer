@@ -135,7 +135,7 @@ function mongosync(a, b) {
                 $wrongmodal.on('hidden.bs.modal', function () {
                     window.location.reload(true);
                 })
-            } else if (mgdict['t_list'] === "提示：目地环境还没有类似sysInfo,请手工插入对应sysInfo后再同步！") {
+            } else if (mgdict['t_list'] === "提示：目的环境还没有类似sysInfo,请手工插入对应sysInfo后再同步！") {
                 $wrongbody.html(mgdict['t_list']);
                 $wrongmodal.modal({
                     keyboard: false, backdrop: 'static'
