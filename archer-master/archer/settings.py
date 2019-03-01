@@ -15,7 +15,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import pymysql
-pymysql.install_as_MySQLdb()
+pymysql.install_as_MySQLdb()  ##当成是mysqldb一样使用，当然也可以不写这句，那就按照pymysql的方式
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
