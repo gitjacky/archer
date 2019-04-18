@@ -393,13 +393,13 @@ def versioninfo(request):
         if os.path.exists(svn_f1) and len(re_path) == 0:
             pro_dir = [x for x in os.listdir(svn_f1) if
                        os.path.isdir(os.path.join(svn_f1, x)) and not x.startswith('.')]
+            pro_dir.sort(key = dao.sort_key)
 
         elif os.path.exists(svn_f1) and len(re_path) > 0:
             pro_dir = [x for x in os.listdir(svn_f1) if os.path.isfile(os.path.join(svn_f1, x))]
             pro_dir = [x for x in pro_dir if os.path.splitext(x)[1] == '.sql']
         else:
             pass
-        # print(pro_dir)
 
         context = {'currentMenu': 'versions', 'loginUser': loginUser, 'pro_dir': pro_dir}
         return JsonResponse(context)
@@ -896,7 +896,7 @@ def relstop(request):
 
 
 # 提交项目版本目录发布工单
-# @csrf_exempt
+@csrf_exempt
 def versionsql(request):
     if request.method == 'POST':
         work_rels = workrelease()
@@ -967,12 +967,9 @@ def versionsql(request):
 
         else:
             return JsonResponse({'msg': "提交失败!"})
-
-        context = {'currentMenu': 'versions', 'msg': 'success'}
     else:
         context = {'currentMenu': 'versions'}
-
-    return render(request, 'versionSql.html', context)
+        return render(request, 'versionSql.html', context)
 
 
 # 开发环境ddl统计
@@ -1212,26 +1209,30 @@ def mgcommit(request):
         s_env = request.POST.get('s_env', False)
         t_env = request.POST.get('t_env', False)
         loginuser = request.session.get('login_username', False)
+        review_dba = 'kxtxdba'
+        reviewer_obj = users.objects.get(username=review_dba)
+        transaction.set_autocommit(False)
+        try:
+            mogoobj = mogocode(mogo_name=mg_name, mogo_type=mg_type, mogo_submit=loginuser, mogo_audit=reviewer_obj,
+                               mogo_stat=Const.mogostat['waiting'], mogo_subtime=getNow(), mogo_source=s_env,
+                               mogo_target=t_env)
+            mogoobj.save()
+            mglogobj = mongolog(audit_id=mogoobj, operation_type=0, operation_type_desc='提交工单',
+                                operation_info='等待操作人员处理！',
+                                operator=loginuser,
+                                operator_display=get_object_or_404(users, username=loginuser).display, )
+            mglogobj.save()
+            transaction.commit()
+            title_prefix = "编码同步提醒"
+            _mail(request, mogoobj.id, title_prefix, loginuser, mogoobj.mogo_target, '', mogoobj.mogo_stat)
+            context = {'status': '提交成功！'}
+        except Exception as msg:
+            transaction.rollback()
+            logger.error(traceback.format_exc())
+            context = {'status': '提交失败！'}
+    else:
+        context = {'status':'提交失败!确认是否已正常登录系统!'}
 
-    review_dba = 'kxtxdba'
-    reviewer_obj = users.objects.get(username=review_dba)
-    transaction.set_autocommit(False)
-    try:
-        mogoobj = mogocode(mogo_name=mg_name, mogo_type=mg_type, mogo_submit=loginuser, mogo_audit=reviewer_obj,
-                           mogo_stat=Const.mogostat['waiting'], mogo_subtime=getNow(), mogo_source=s_env,
-                           mogo_target=t_env)
-        mogoobj.save()
-        mglogobj = mongolog(audit_id=mogoobj, operation_type=0, operation_type_desc='提交工单', operation_info='等待操作人员处理！',
-                            operator=loginuser, operator_display=get_object_or_404(users, username=loginuser).display, )
-        mglogobj.save()
-        transaction.commit()
-        title_prefix = "编码同步提醒"
-        _mail(request, mogoobj.id, title_prefix, loginuser, mogoobj.mogo_target, '', mogoobj.mogo_stat)
-        context = {'status': '提交成功！'}
-    except Exception as msg:
-        transaction.rollback()
-        logger.error(traceback.format_exc())
-        context = {'status': '提交失败！'}
     return JsonResponse(context)
 
 

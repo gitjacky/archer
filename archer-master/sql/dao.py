@@ -173,3 +173,13 @@ class Dao(object):
         except Exception as e:
             logger.error(traceback.format_exc())
             return e
+
+    def sort_key(self,s):
+        # 排序关键字匹配
+        # 匹配开头数字序号
+        if s:
+            try:
+                c = re.findall('^\d+', s)[0]
+            except:
+                c = -1
+            return int(c)

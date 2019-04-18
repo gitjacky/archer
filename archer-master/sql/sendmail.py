@@ -40,8 +40,8 @@ class MailSender(object):
         msg['To'] = ','.join(listToAddr)
         msg['Subject'] = Header(strTitle, "utf-8").encode()
 
-        server = smtplib.SMTP(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # SMTP协议默认端口是25
-        server.set_debuglevel(1)
+        server = smtplib.SMTP_SSL(self.MAIL_REVIEW_SMTP_SERVER, self.MAIL_REVIEW_SMTP_PORT)  # SMTP协议默认端口是25
+        server.set_debuglevel(2)
 
         #如果提供的密码为空，则不需要登录SMTP server
         if self.MAIL_REVIEW_FROM_PASSWORD != '':

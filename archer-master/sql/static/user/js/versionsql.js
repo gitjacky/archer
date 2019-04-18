@@ -218,6 +218,14 @@ function getdbsaudit() {
 }
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+//排序函数
+// function compare(a,b){
+//     if(a>b){
+//         return 1; //sort()中参数大于0，交换a b顺序，升序排列
+//     }else if(a<b){
+//         return -1;  //sort()中参数小于0，a b顺序不变，升序排列
+//     }
+// }
 //由02目录获取父项目名列表
 function p_getobj() {
     var base_svn = document.getElementById("svn_path");
@@ -231,7 +239,7 @@ function p_getobj() {
         data: {base_svn: base_svn.value},
         //success用来接收versionsql()函数执行之后的return HttpResponse返回值
         success: function (arg) {
-            // console.log(arg.pro_dir);
+            // console.log((arg.pro_dir).sort(compare));
             var pro_dir = arg.pro_dir;
             var opSelect = document.getElementById("p_name");
             // $("#ver_name").empty();

@@ -1,5 +1,5 @@
 #!/usr/local/bin/python3.4
-#-*-coding: utf-8-*-
+# -*-coding: utf-8-*-
 import pymongo
 from bson.objectid import ObjectId
 import os
@@ -7,19 +7,19 @@ import json
 import time
 import re
 from .aes_decryptor import Prpcrypt
-from datetime import date,datetime
+from datetime import date, datetime
 from dateutil import parser
 from .models import mongo_config
 
 prpCryptor = Prpcrypt()
 
-cur_tm = time.strftime('%Y%m%d%H%M%S',time.localtime(time.time()))
-tm = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(time.time()))
+cur_tm = time.strftime('%Y%m%d%H%M%S', time.localtime(time.time()))
+tm = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
 pid = os.getpid()
 
-class SyncSc(object):
 
-    def __init__(self,service_name,code_type,from_env,to_env,url_choice):
+class SyncSc(object):
+    def __init__(self, service_name, code_type, from_env, to_env, url_choice):
         self.service_name = service_name
         self.code_type = code_type
         self.from_env = from_env
@@ -34,24 +34,23 @@ class SyncSc(object):
         self.db_connects(self.from_env)
         env = 'from_env'
         s_result = self.s_search(env)
-        #print(s_result)
-        #print("source_list", source_list)
+        # print(s_result)
+        # print("source_list", source_list)
         if source_list:
             return source_list
         else:
             return False
 
-
-    #接口源环境
+    # 接口源环境
     def s_code(self):
         # global file_name
         check_result = self.check_file()
-        #print(check_result)
+        # print(check_result)
         if check_result:
             self.db_connects(self.from_env)
             env = 'from_env'
             s_result = self.s_search(env)
-            #print(s_result)
+            # print(s_result)
             if s_result:
                 return s_result
             else:
@@ -60,7 +59,7 @@ class SyncSc(object):
             os.remove(file_name)
             return ("inuse")
 
-    #接口目的环境
+    # 接口目的环境
     def t_code(self):
 
         if self.to_env and self.service_name:
@@ -71,14 +70,14 @@ class SyncSc(object):
                 os.remove(file_name)
                 return "已存在"
             else:
-                print("%s%s%s%s" % ("\n",self.to_env," 不存在!","\n"))
+                print("%s%s%s%s" % ("\n", self.to_env, " 不存在!", "\n"))
 
-                json_f = open(file_name,'r')
+                json_f = open(file_name, 'r')
                 json_content = json.load(json_f)
                 dict_json = json.loads(json_content)
                 json_f.close()
 
-                #定时器
+                # 定时器
                 if self.code_type == 1:
                     t_tsstimer = db.tssTimer
                     tss = {}
@@ -91,15 +90,15 @@ class SyncSc(object):
                                 i['tssTimer']['addTime'] = parser.parse(i['tssTimer']['addTime'])
                             else:
                                 pass
-                            if 'updateTime' in i['tssTimer'] and i['tssTimer']['updateTime']: 
+                            if 'updateTime' in i['tssTimer'] and i['tssTimer']['updateTime']:
                                 i['tssTimer']['updateTime'] = parser.parse(i['tssTimer']['updateTime'])
                             else:
                                 pass
-                            if 'startTime' in i['tssTimer'] and i['tssTimer']['startTime']: 
+                            if 'startTime' in i['tssTimer'] and i['tssTimer']['startTime']:
                                 i['tssTimer']['startTime'] = parser.parse(i['tssTimer']['startTime'])
                             else:
                                 pass
-                            if 'endTime' in i['tssTimer'] and i['tssTimer']['endTime']: 
+                            if 'endTime' in i['tssTimer'] and i['tssTimer']['endTime']:
                                 i['tssTimer']['endTime'] = parser.parse(i['tssTimer']['endTime'])
                             else:
                                 pass
@@ -118,8 +117,8 @@ class SyncSc(object):
                     except Exception as e:
                         raise e
                         os.remove(file_name)
-                #MQ队列
-                elif  self.code_type == 2:
+                # MQ队列
+                elif self.code_type == 2:
                     t_mqqueue = db.mQQueue
                     mq = {}
                     for i in dict_json:
@@ -142,13 +141,13 @@ class SyncSc(object):
                     except Exception as e:
                         raise e
                         os.remove(file_name)
-                #接口
+                # 接口
                 else:
                     t_sysinfo = db.sysInfo
                     t_resource = db.resource
                     t_flow = db.flow
                     t_service = db.service
-                    
+
                     resource = {}
                     flow = {}
                     flow2 = {}
@@ -163,41 +162,40 @@ class SyncSc(object):
                                 sys_pro = (sysinfo['hosts'][0]['address']).split('/')[-2]
                             else:
                                 pass
-                            dest_urls = t_sysinfo.find({"hosts.address":{'$regex':sys_pro}})
-                               
-                            #目的环境可选sysInfo信息存放至sys_dicts
+                            dest_urls = t_sysinfo.find({"hosts.address": {'$regex': sys_pro}})
+
+                            # 目的环境可选sysInfo信息存放至sys_dicts
                             sys_dicts = {}
                             i_count = 0
                             for i in dest_urls:
-                                i_count  = i_count + 1
+                                i_count = i_count + 1
                                 sys_dicts[i_count] = i
 
-
-                            #目的环境若存在类似的url
+                            # 目的环境若存在类似的url
                             sys_urls = []
                             syss = {}
                             if sys_dicts:
-                                #print("可选sysInfo: \n\n")
+                                # print("可选sysInfo: \n\n")
                                 for i in sys_dicts:
-                                    print("%s) %s" % (str(i),sys_dicts[i]['hosts'][0]['address']))
+                                    print("%s) %s" % (str(i), sys_dicts[i]['hosts'][0]['address']))
                                     sys_urls.append(sys_dicts[i]['hosts'][0]['address'])
                                     syss[sys_dicts[i]['_id']] = sys_dicts[i]['hosts'][0]['address']
-                                #print("\n")
-                                #print("sys_urls",sys_urls)
-                                #print("syss", syss)
+                                # print("\n")
+                                # print("sys_urls",sys_urls)
+                                # print("syss", syss)
 
-                                #第一次请求，没有用户返回值
+                                # 第一次请求，没有用户返回值
                                 if not self.url_choice:
                                     os.remove(file_name)
                                     return sys_urls
-                                #第二次请求，有用户返回值
+                                # 第二次请求，有用户返回值
                                 else:
                                     my_choice = list(syss.keys())[list(syss.values()).index(self.url_choice)]
                                     n_sysid = my_choice
                             else:
-                                #print(("%s%s") % ("提示：目的环境还没有类似sysInfo,请手工先插入对应sysInfo记录后再运行本脚本！",'\n'))
+                                # print(("%s%s") % ("提示：目的环境还没有类似sysInfo,请手工先插入对应sysInfo记录后再运行本脚本！",'\n'))
                                 os.remove(file_name)
-                                return("提示：目的环境还没有类似sysInfo,请手工插入对应sysInfo后再同步！")
+                                return ("提示：目的环境还没有类似sysInfo,请手工插入对应sysInfo后再同步！")
 
                                 # exit(0)
 
@@ -221,13 +219,12 @@ class SyncSc(object):
                             service_id = i['service']['_id']
                             i['service']['_id'] = ObjectId(service_id)
                             service = i['service']
-                         
+
                     if resource and n_sysid:
                         resource['sysId'] = str(n_sysid).split('"')[0]
-                        #print(resource)
+                        # print(resource)
                     else:
                         pass
-
 
                     try:
                         if resource:
@@ -248,7 +245,7 @@ class SyncSc(object):
                             pass
 
                         os.remove(file_name)
-                        #print("已完成")
+                        # print("已完成")
                         return "已完成"
 
                     except pymongo.errors.DuplicateKeyError as dk:
@@ -262,7 +259,7 @@ class SyncSc(object):
             print("所提供目的环境有误!")
             os.remove(file_name)
 
-    #编码查询
+    # 编码查询
     def s_search(self, env):
         '''查询mongo接口是否存在,如果不存在就给出提示.'''
         global source_list
@@ -361,7 +358,7 @@ class SyncSc(object):
                 sysid = c1["sysId"]
                 mysys = db.sysInfo
                 sys_info = mysys.find_one({"_id": ObjectId(sysid)})
-                #print(sys_info['hosts'])
+                # print(sys_info['hosts'])
 
                 # 源环境sysInfo信息添加到嵌套列表
                 collect = {}
@@ -400,7 +397,7 @@ class SyncSc(object):
                 # 查找sysInfo记录
                 mysys = db.sysInfo
                 sys_info = mysys.find_one({"_id": ObjectId(sysid)})
-                #print(sys_info['hosts'])
+                # print(sys_info['hosts'])
 
                 # 源环境异步sysInfo信息添加到嵌套列表
                 collect = {}
@@ -424,8 +421,8 @@ class SyncSc(object):
 
             return s_info
 
-    #不同环境连接信息
-    def db_connects(self,env_name):
+    # 不同环境连接信息
+    def db_connects(self, env_name):
         mgconfig = mongo_config.objects.get(db_name=env_name)
         mogohost = mgconfig.mongo_host
         mogoport = mgconfig.mongo_port
@@ -445,10 +442,11 @@ class SyncSc(object):
                     code_tp = "MQ"
                 else:
                     code_tp = "接口"
-                print("\n%s %s 从 %s 同步到 %s \n" % (code_tp,self.service_name, self.from_env.upper(), self.to_env.upper()))
+                print(
+                    "\n%s %s 从 %s 同步到 %s \n" % (code_tp, self.service_name, self.from_env.upper(), self.to_env.upper()))
             else:
                 pass
-            #print("%s %s %s" % (30 * "*", str(env_name).upper(), 30 * "*"))
+            # print("%s %s %s" % (30 * "*", str(env_name).upper(), 30 * "*"))
             global db
             return db
         except Exception as e:
@@ -465,14 +463,15 @@ class SyncSc(object):
         else:
             return True
 
-#处理objectid的hook
+
+# 处理objectid的hook
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, ObjectId):
             return str(o)
-        elif isinstance(o, datetime):  
+        elif isinstance(o, datetime):
             return o.strftime('%Y-%m-%dT%H:%M:%SZ')
-        elif isinstance(o, date):  
-            return o.strftime('%Y-%m-%d')  
+        elif isinstance(o, date):
+            return o.strftime('%Y-%m-%d')
         else:
             return json.JSONEncoder.default(self, o)

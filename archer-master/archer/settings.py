@@ -10,12 +10,13 @@ https://docs.djangoproject.com/en/1.8/topics/settings/
 
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.8/ref/settings/
+
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import pymysql
-pymysql.install_as_MySQLdb()
+pymysql.install_as_MySQLdb()  ##当成是mysqldb一样使用，当然也可以不写这句，那就按照pymysql的方式
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -209,14 +210,14 @@ LOCK_TIME_THRESHOLD = 300
 LOCK_CNT_THRESHOLD = 5
 
 #是否开启邮件提醒功能：发起SQL上线后会发送邮件提醒审核人审核，执行完毕会发送给DBA. on是开，off是关，配置为其他值均会被archer认为不开启邮件功能
-MAIL_ON_OFF='off'
+MAIL_ON_OFF='on'
 
-MAIL_REVIEW_SMTP_SERVER='mail.xxxx.cn'
-MAIL_REVIEW_SMTP_PORT=25
-MAIL_REVIEW_FROM_ADDR='xxxxxx'                                               #发件人，也是登录SMTP server需要提供的用户名
-MAIL_REVIEW_FROM_PASSWORD='xxxxxx'                                                         #发件人邮箱密码，如果为空则不需要login SMTP server
+MAIL_REVIEW_SMTP_SERVER='smtp.163.com'
+MAIL_REVIEW_SMTP_PORT=465
+MAIL_REVIEW_FROM_ADDR='xxxx@163.com'                                               #发件人，也是登录SMTP server需要提供的用户名
+MAIL_REVIEW_FROM_PASSWORD='xxxx'                                                         #发件人邮箱密码，如果为空则不需要login SMTP server
 MAIL_REVIEW_DBA_ADDR=['']        #DBA地址，执行完毕会发邮件给DBA，以list形式保存
 
 #是否过滤【DROP DATABASE】|【DROP TABLE】|【TRUNCATE PARTITION】|【TRUNCATE TABLE】等高危DDL操作：
 #on是开，会首先用正则表达式匹配sqlContent，如果匹配到高危DDL操作，则判断为“自动审核不通过”；off是关，直接将所有的SQL语句提交给inception，对于上述高危DDL操作，只备份元数据
-CRITICAL_DDL_ON_OFF='on'
+CRITICAL_DDL_ON_OFF='off'
