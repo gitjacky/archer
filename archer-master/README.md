@@ -1,5 +1,5 @@
 # archer
-基于inception的自动化SQL操作平台，基于开源archer平台针对公司实际需求做二次开发，除基本SQL审核功能外，满足版本发布脚本管理(一个发布版本有多个sql文件),mongo接口同步,一键上线其他环境需求。
+基于inception的自动化SQL操作平台，后期又针对公司具体需求对最初的archer平台做了二次开发，除基本SQL审核功能外，增加create index语法创建索引支持，添加公共字段latest_time自动审核提示，方便版本发布时多脚本管理(一个发布版本有多个sql文件)，同时增加工单搜索、工单语句修改、mongo接口同步与查询、版本工单一键上线其他环境等功能。
 
 ### 开发语言和推荐环境：
 python：3.4<br/>
@@ -27,7 +27,7 @@ linux : 64位linux操作系统均可
 
 ### 设计规范：
 * 合理的数据库设计和规范很有必要，尤其是MySQL数据库，内核没有oracle、db2、SQL Server等数据库这么强大，需要合理设计，扬长避短。互联网业界有成熟的MySQL设计规范，特此撰写如下。请读者在公司上线使用archer系统之前由专业DBA给所有后端开发人员培训一下此规范，做到知其然且知其所以然。<br/>
-下载链接：  https://github.com/gitjacky/archer/raw/master/docs/mysql_db_design_guide.docx
+规范链接：  https://github.com/gitjacky/archer/blob/master/archer-master/docs/mysql_db_design_guide.md
 
 ### 主要配置文件：
 * archer/archer/settings.py<br/>
