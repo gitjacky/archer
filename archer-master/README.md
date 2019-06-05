@@ -92,6 +92,7 @@ cd archer && bash debug.sh<br/>
 3. 工单展示页：<br/>
 ![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/allworkflow.png)<br/>
 4. 版本发布提交SQL文件,查看版本工单列表，查看版本工单个详情：<br/>
+版本发布页面直接读取svn目录下对应版本目录中的sql文件，供开发人员进行提交(svn路径如02Release/项目目录名/子项目目录名或版本目录名/版本目录名/)<br/>
 ![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/versioncommit.png)<br/>
 ![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/versionlist.png)<br/>
 ![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/versiondetail.png)<br/>
