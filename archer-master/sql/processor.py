@@ -5,7 +5,6 @@ leftMenuCommon = (
     {'key': 'allworkflow', 'name': '开发SQL审核', 'url': '/allworkflow/', 'class': 'glyphicon glyphicon-home'},
     {'key': 'versions', 'name': '版本SQL上线', 'url': '/versions/', 'class': 'glyphicon glyphicon-cloud-upload'},
     {'key': 'mongo', 'name': 'MONGO同步', 'url': '/mongo/', 'class': 'glyphicon glyphicon-leaf'},
-    {'key': 'dbaprinciples', 'name': 'SQL审核必读', 'url': '/dbaprinciples/', 'class': 'glyphicon glyphicon-book'},
 )
 leftMenuQuery = (
     {'key': 'mysqlquery', 'name': 'MySQL查询', 'url': '/sqlquery/', 'class': 'glyphicon glyphicon-search'},
