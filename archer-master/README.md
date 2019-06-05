@@ -86,29 +86,29 @@ cd archer && bash debug.sh<br/>
 
 ### 系统展示截图：
 1. 用户登录页：<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/login.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/login.png)<br/>
 2. 自助审核SQL，提交SQL工单：<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/submitsql.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/submitsql.png)<br/>
 3. 工单展示页：<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/allworkflow.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/allworkflow.png)<br/>
 4. 版本发布提交SQL文件,查看版本工单列表，查看版本工单个详情：<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/versioncommit.png)<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/versionlist.png)<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/versiondetail.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/versioncommit.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/versionlist.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/versiondetail.png)<br/>
 5. mongo编码同步工单提交，批量提交，同步工单列表：<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/mongocommit.png)<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/groupsync.png)<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/mongolist.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/mongocommit.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/groupsync.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/mongolist.png)<br/>
 6. 用户、集群、工单管理：<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/adminsqlusers.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/adminsqlusers.png)<br/>
 7. 开发工单DDL统计图表，工单个数统计图表：<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/ddlcount.png)<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/charts.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/ddlcount.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/charts.png)<br/>
 
 ### 部分小问题解决办法：
 1. 报错：<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/bugs/bug1.png)&nbsp;
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/bugs/bug2.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/bugs/bug1.png)&nbsp;
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/bugs/bug2.png)<br/>
 原因：python3的pymysql模块会向inception发送SHOW WARNINGS语句，导致inception返回一个"Must start as begin statement"错误被archer捕捉到报在日志里.<br/>
 解决：如果实在忍受不了，请修改/path/to/python3/lib/python3.4/site-packages/pymysql/cursors.py:338行，将self._show_warnings()这一句注释掉，换成pass，如下：<br/>
-![image](https://github.com/gitjacky/archer/tree/master/archer-master/screenshots/bugs/bug3.png)
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/bugs/bug3.png)
