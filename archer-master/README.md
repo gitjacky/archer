@@ -100,7 +100,7 @@ cd archer && bash debug.sh<br/>
 ![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/groupsync.png)<br/>
 ![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/mongolist.png)<br/>
 6. 用户、集群、工单管理：<br/>
-![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/adminsqlusers.png)<br/>
+![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/adminsqluser.png)<br/>
 7. 开发工单DDL统计图表，工单个数统计图表：<br/>
 ![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/ddlcount.png)<br/>
 ![image](https://github.com/gitjacky/archer/blob/master/archer-master/screenshots/charts.png)<br/>
