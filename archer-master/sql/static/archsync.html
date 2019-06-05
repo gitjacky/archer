@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <div style="padding: 0px 10px 10px 0px;">
+        <h4 style="font-family: 'Microsoft YaHei UI';color: #2aabd2;">| <span style="color: #0f0f0f">数据库表结构对比：</span></h4>
+        <div style="width:100%; height:2px; border-top:1px solid #d5d5d5; clear:both;margin-top: 18px;margin-bottom: 15px;"></div>
+        {% csrf_token %}
+
+        <div class="form-group col-lg-5">
+            <label for="instance_name" class="col-lg-2 control-label"
+                   style="font-size: medium;padding-top: 4px;padding-right: 0;padding-left: 0px;">源环境名</label>
+            <div class="col-lg-8">
+                <select id="instance_name" name="instance_name"
+                        class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
+                        title="选择源实例"
+                        data-placeholder="选择源实例" required>
+                    {% for instance in instances %}
+                        <option value="{{ instance }}">{{ instance }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group col-lg-5">
+            <label for="instance_dbname" class="col-lg-2 control-label"
+                   style="font-size: medium;padding-top: 4px;padding-right: 0;padding-left: 0px;">源库名称</label>
+            <div class="col-lg-5">
+                <select id="instance_dbname" name="instance_dbname"
+                        class="form-control selectpicker show-tick bs-select-hidden"
+                        data-name="选择源库名" data-placeholder="选择源库名" required data-live-search="true"
+                        style="border-radius:5px;overflow: hidden">
+                    <option value="all">全部</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group col-lg-5">
+            <label for="target_instance_name" class="col-lg-2 control-label"
+                   style="font-size: medium;padding-top: 4px;padding-right: 0;padding-left: 0px;">目标环境</label>
+            <div class="col-lg-8">
+                <select id="target_instance_name" name="target_instance_name"
+                        class="selectpicker show-tick form-control bs-select-hidden" data-live-search="true"
+                        title="选择目标实例"
+                        data-placeholder="选择目标实例" required>
+                    {% for instance in instances %}
+                        <option value="{{ instance }}">{{ instance }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-group col-lg-5">
+            <label for="target_instance_dbname" class="col-lg-2 control-label"
+                   style="font-size: medium;padding-top: 4px;padding-right: 0;padding-left: 0px;">目标库名</label>
+            <div class="col-lg-5">
+                <select id="target_instance_dbname" name="target_instance_dbname"
+                        class="form-control selectpicker show-tick bs-select-hidden"
+                        data-name="选择目标库名" data-placeholder="选择目标库名" required data-live-search="true"
+                        style="border-radius:5px;overflow: hidden">
+                    <option value="all">全部</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group form-inline col-lg-8">
+            <h5 class="control-label">可选参数：</h5>
+            <div class="form-group">
+                <div class="checkbox" style="padding-left: 0px;">
+                    <label>
+                        <input id="sync-auto-inc" type="checkbox">
+                        --sync-auto-inc(包含自增值对比)
+                    </label>
+                </div>
+                <div class="checkbox" style="padding-left: 20px;">
+                    <label>
+                        <input id="sync-comments" type="checkbox">
+                        --sync-comments(包含备注信息对比)
+                    </label>
+                </div>
+            </div><br>
+            <h5 class="control-label" style="color: red"><b>备注：依据需要灵活决定是否选择上面两个选项。</b></h5>
+        </div>
+        <div class="form-group col-lg-5">
+            <button id="btn-SchemaSync" type="submit" class="btn btn-primary" onclick="schemasync()">
+                执行对比
+            </button>
+
+            <button id="btn-ShowSyncResult" type="submit" class="btn btn-info" style="margin-left: 20px;" onclick="">
+                查看结果
+            </button>
+        </div>
+        <div class="col-md-9 column" id="schemadiff-result" style="display:none;">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    对比结果
+                </div>
+                <div class="panel-body">
+                    <h5 class="control-label text-bold" style="color: red">
+                        <b>页面仅展示单库对比结果，生成的SQL文件保存在服务器/app/schemasync目录</b></h5>
+                    <br>
+                    <div class="row clearfix">
+                        <div id="schemadiff-result-col" class="col-md-12"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    {% block js %}
+        {% load staticfiles %}
+        <script src="{% static 'user/js/archsync.js' %}"></script>
+    {% endblock %}
+
+{% endblock content %}

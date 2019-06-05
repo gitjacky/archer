@@ -9,6 +9,7 @@ from django.db import connection
 from threading import Thread
 
 from django.db.models import Q
+from django.contrib.auth.models import Group
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render, get_object_or_404, get_list_or_404
@@ -22,8 +23,10 @@ from .dao import Dao
 from .const import Const
 from .sendmail import MailSender
 from .inception import InceptionDao
+from .group import user_instances
+from .permission import superuser_required
 from .aes_decryptor import Prpcrypt
-from .models import users, master_config, workflow, workrelease, detailrecords, rel_memo, mogocode, config
+from .models import users, master_config, workflow, workrelease, detailrecords, rel_memo, mogocode, sysconfig
 
 permission_required = partial(permission_required, raise_exception=True)
 logger = logging.getLogger('default')
@@ -45,7 +48,7 @@ def logout(request):
 
 
 # 首页，也是查看所有SQL工单页面，具备翻页功能
-@permission_required('sql.can_select_workflow')
+@permission_required('sql.can_select_workflow',raise_exception=True)
 def allworkflow(request):
     # 一个页面展示
     PAGE_LIMIT = 13
@@ -341,7 +344,7 @@ def execute(request):
         context = {'errMsg': '当前工单状态不是等待人工审核中，请刷新当前页面！'}
         return render(request, 'error.html', context)
 
-    dictConn = dao.getMasterConnStr(clusterName)
+    dictConn = dao.getMasterConnStr(clusterName,None)
 
     # 将流程状态修改为执行中，并更新reviewok_time字段
     workflowDetail.review_man = loginUser
@@ -601,7 +604,7 @@ def ddlcount(request):
 
 # Mongo同步
 @csrf_exempt
-# @permission_required('sql.can_select_mogocode')
+@permission_required('sql.can_select_mogocode',raise_exception=True)
 def mongowork(request):
     PAGE_LIMIT = 13
     pageNo = 0
@@ -733,10 +736,18 @@ def mgmutisubmit(request):
 
 # sql查询功能
 @csrf_exempt
+@permission_required('sql.menu_query',raise_exception=True)
 def sqlquery(request):
     context = {'currentMenu': 'mysqlquery', }
     return render(request, 'sqlquery.html', context)
 
+#实例表结构同步
+@csrf_exempt
+@permission_required('sql.menu_schemasync',raise_exception=True)
+def archsync(request):
+    instances = [instance.instance_name for instance in user_instances(request.user, 'master')]
+    context = {'currentMenu': 'archsync','instances':instances,}
+    return render(request,'archsync.html',context)
 
 # 配置管理界面
 def parameter_config(request):
@@ -746,12 +757,37 @@ def parameter_config(request):
     # 获取所有权限组
     # auth_group_list = group.objects.all()
     # 获取所有配置项
-    all_config = config.objects.all().values('item', 'value')
+    all_config = sysconfig.objects.all().values('item', 'value')
     sys_config = {}
     for items in all_config:
         sys_config[items['item']] = items['value']
 
     # context = {'group_list': group_list, 'auth_group_list': auth_group_list,
     #            'config': sys_config, 'WorkflowDict': WorkflowDict}
-    context = {'config': sys_config}
+    context = {'currentMenu': "config","config":sys_config}
     return render(request, 'config.html', context)
+
+# 资源组管理页面
+@superuser_required
+def group(request):
+    context = {'currentMenu': 'group',}
+    return render(request, 'group.html',context)
+
+
+# 资源组组关系管理页面
+@superuser_required
+def groupmgmt(request, id):
+    group = Group.objects.get(id=id)
+    return render(request, 'groupmgmt.html', {'currentMenu': 'group','group': group})
+
+
+# 实例管理页面
+@permission_required('sql.menu_instance', raise_exception=True)
+def instance(request):
+    context = {'currentMenu': 'instance',}
+    return render(request, 'instance.html',context)
+
+# 实例用户管理页面
+@permission_required('sql.menu_instance', raise_exception=True)
+def instanceuser(request, instance_id):
+    return render(request, 'instanceuser.html', {'instance_id': instance_id})

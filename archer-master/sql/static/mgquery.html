@@ -50,7 +50,8 @@
         <div class="panel-body" id="sourcelist">
         </div>
     </div>
-    {% load staticfiles %}
-    <script src="{% static 'jquery/jquery.min.js' %}"></script>
-    <script src="{% static 'user/js/mogo.js' %}"></script>
+    {% block js %}
+        {% load staticfiles %}
+        <script src="{% static 'user/js/mogo.js' %}"></script>
+    {% endblock js %}
 {% endblock content %}

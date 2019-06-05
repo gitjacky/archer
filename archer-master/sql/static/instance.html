@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h4 style="font-family: 'Microsoft YaHei UI';color: #2aabd2;">| <span style="color: #0f0f0f">实例配置管理：</span></h4>
+    <div style="width:100%; height:2px; border-top:1px solid #d5d5d5; clear:both;margin-top: 18px;margin-bottom: 15px;"></div>
+    <!-- 自定义操作按钮-->
+    <div id="toolbar" class="form-inline">
+        {% csrf_token %}
+        <div class="form-group bootstrap-select">
+            <select id="type" class="dropdown-menu-right selectpicker">
+                <option value="" selected="selected">全部</option>
+                <option value="master">MASTER</option>
+                <option value="slave">SLAVE</option>
+            </select>
+        </div>
+        <div class="form-group ">
+            <button id="btn_add_master" type="button" class="btn btn-default"
+                    onclick="window.location.href='/admin/sql/instance/add/'">
+                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                添加实例
+            </button>
+        </div>
+    </div>
+    <!-- 表格-->
+    <div class="table-responsive">
+        <table id="instance-list" data-toggle="table" class="table table-striped table-hover"
+               style="table-layout:inherit;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+        </table>
+    </div>
+    {% block js %}
+        {% load staticfiles %}
+        {#    <script src="{% static 'bootstrap-table/js/bootstrap-table-export.min.js' %}"></script>#}
+        {#    <script src="{% static 'bootstrap-table/js/tableExport.min.js' %}"></script>#}
+        <script>
+            //获取列表
+            function instancelist() {
+                //采取异步请求
+                //初始化table
+                $('#instance-list').bootstrapTable('destroy').bootstrapTable({
+                    escape: true,
+                    method: 'post',
+                    contentType: "application/x-www-form-urlencoded",
+                    url: "/instance/list/",
+                    striped: true,                      //是否显示行间隔色
+                    cache: false,                       //是否使用缓存，默认为true，所以一般情况下需要设置一下这个属性（*）
+                    pagination: true,                   //是否显示分页（*）
+                    sortable: true,                     //是否启用排序
+                    sortOrder: "asc",                   //排序方式
+                    sidePagination: "server",           //分页方式：client客户端分页，server服务端分页（*）
+                    pageNumber: 1,                      //初始化加载第一页，默认第一页,并记录
+                    pageSize: 14,                     //每页的记录行数（*）
+                    pageList: [20, 30, 50, 100],       //可供选择的每页的行数（*）
+                    showExport: true,                   //是否显示导出按钮
+                    exportOptions: {
+                        fileName: 'instance'  //文件名称设置
+                    },
+                    search: true,                      //是否显示表格搜索
+                    strictSearch: false,                //是否全匹配搜索
+                    showColumns: true,                  //是否显示所有的列（选择显示的列）
+                    showRefresh: true,                  //是否显示刷新按钮
+                    smartDisplay: true,
+                    minimumCountColumns: 2,             //最少允许的列数
+                    clickToSelect: true,                //是否启用点击选中行
+                    uniqueId: "id",                     //每一行的唯一标识，一般为主键列
+                    showToggle: true,                   //是否显示详细视图和列表视图的切换按钮
+                    cardView: false,                    //是否显示详细视图
+                    detailView: false,                  //是否显示父子表
+                    locale: 'zh-CN',                    //本地化
+                    toolbar: "#toolbar",               //指明自定义的toolbar
+                    queryParamsType: 'limit',
+                    //请求服务数据时所传参数
+                    queryParams: function (params) {
+                        return {
+                            limit: params.limit,
+                            offset: params.offset,
+                            search: params.search,
+                            type: $("#type").val(),
+                            csrfmiddlewaretoken: '{{ csrf_token }}' //django的csrf_token
+                        } //return指明传送到后台的数据
+                    },
+                    columns: [    //指明前台显示的列与样式。
+                        {
+                            title: 'ID',
+                            field: 'id',
+                            align: 'center',
+                            valign: 'middle'
+                        }, {
+                            title: '实例名称',
+                            field: 'instance_name',
+                            valign: 'middle',
+                            align: 'center',
+                            formatter: function (value, row, index) {
+                                return "<a href=\"/admin/sql/instance/" + row.id + "/\">" + value + "</a>"
+                            }
+                        }, {
+                            title: '实例类型',
+                            field: 'type',
+                            align: 'center',
+                            valign: 'middle'
+                        }, {
+                            title: '数据库类型',
+                            field: 'db_type',
+                            width: '120',
+                            align: 'center',
+                            valign: 'middle'
+                        }, {
+                            title: 'HOST',
+                            field: 'host',
+                            align: 'center',
+                            valign: 'middle'
+                        }, {
+                            title: 'PORT',
+                            field: 'port',
+                            width: '80',
+                            align: 'center',
+                            valign: 'middle'
+                        }, {
+                            title: 'USER',
+                            field: 'user',
+                            align: 'center',
+                            valign: 'middle'
+                        }, {
+                            title: '操 作',
+                            width: '140',
+                            align: 'center',
+                            field: '',
+                            formatter: function (value, row, index) {
+                                return "<button class=\"btn btn-info btn-sm\" onclick=\"window.location.href='/instanceuser/" + row.id + "/'\">用户权限</button>\n" +
+                                    "<button class=\"btn btn-warning btn-sm\" instance_id=\"" + row.id + "\" onclick=\"check_instance(this)" + "\">测试连接</button>\n"
+                            }
+                        }],
+                    onLoadSuccess: function () {
+                    },
+                    onLoadError: function () {
+                        alert("数据加载失败！请检查接口返回信息和错误日志！");
+                    },
+                    onSearch: function (e) {
+                        //传搜索参数给服务器
+                        queryParams(e)
+                    }
+                });
+
+            }
+
+            // 检测连接
+            function check_instance(obj) {
+                $.ajax({
+                    type: "post",
+                    url: "/check/checkinstance/",
+                    dataType: "json",
+                    data: {
+                        'instance_id': $(obj).attr("instance_id")
+                    },
+                    complete: function () {
+                    },
+                    headers: {"X-CSRFtoken": $.cookie("csrftoken")},
+                    success: function (data) {
+                        if (data.status === 0) {
+                            alert('连接成功')
+                        } else {
+                            alert("status: " + data.status + "\nmsg: " + data.msg);
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        alert(errorThrown);
+                    }
+                });
+            }
+
+            //筛选变动自动刷新
+            $("#type").change(function () {
+                instancelist();
+            });
+
+            //初始化数据
+            $(document).ready(function () {
+                instancelist()
+            });
+        </script>
+    {% endblock %}
+{% endblock content %}
+

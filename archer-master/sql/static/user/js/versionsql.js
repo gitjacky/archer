@@ -87,10 +87,24 @@ $("#btn-versionsql").click(function () {
             headers: {"X-CSRFtoken": $.cookie("csrftoken")},
             success: function (data) {
                 // alert(data.msg);
-                $wrongbody.html("<span style='font-size: 17px;font-weight: 700;display:block;text-align: center;color: darkgreen'>" + data.msg + "</span><br><span style='font-size: 17px;font-weight: 700;color: red;display:block;text-align: center;'> 请点击'自动审核'按钮确认SQL是否有异常或是否是最新提交的SQL内容!</span>");
-                $wrongmodal.modal({
-                    keyboard: false, backdrop: 'static'
-                });
+                if (data.msg === "0") {
+                    $wrongbody.html("<span style='font-size: 17px;font-weight: 700;display:block;text-align: center;color: darkgreen'>提交成功!</span><br><span style='font-size: 17px;font-weight: 700;color: red;display:block;text-align: center;'> 请点击'自动审核'按钮确认SQL是否有异常或是否是最新提交的SQL内容!</span>");
+                    $wrongmodal.modal({
+                        keyboard: false, backdrop: 'static'
+                    })
+                }
+                else if(data.msg==="1") {
+                    $wrongbody.html("<span style='font-size: 17px;font-weight: 700;display:block;text-align: center;color: darkgreen'>提交失败!</span>");
+                    $wrongmodal.modal({
+                        keyboard: false, backdrop: 'static'
+                    })
+                }
+                else{
+                    $wrongbody.html("<span style='font-size: 17px;font-weight: 700;display:block;text-align: center;color: darkgreen'>已有相同工单当前状态为待审核，请勿重复提交!</span>");
+                    $wrongmodal.modal({
+                        keyboard: false, backdrop: 'static'
+                    })
+                }
                 // window.location.reload(true);
                 $wrongmodal.on('hidden.bs.modal', function () {
                     window.location.reload(true);
@@ -127,7 +141,6 @@ function selectAll() {
         });
 
         $("#sql_list").val(a.substring(0, a.length - 1));
-        console.log("filelist:" + $("#sql_list").val());
     });
     return $("#sql_list").val();
 }
@@ -552,7 +565,6 @@ $('#btns').on("click", "li", function () {
     v_this.addClass('active');
 
     var $pageNo = v_this.text();
-    console.log($pageNo);
     if ($pageNo === "前一页") {
         $pageNo = parseInt($(this).text() - 1);
     } else if ($pageNo === "后一页") {

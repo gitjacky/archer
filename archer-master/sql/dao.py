@@ -2,11 +2,11 @@
 
 import MySQLdb
 import json
-from django.db import connection
+from django.db import connection,transaction
 import logging,traceback
-from .models import master_config
+from .models import master_config, instance
 from .aes_decryptor import Prpcrypt
-import time,copy,re
+import time,copy,re, os
 from .const import Const
 
 logger = logging.getLogger('default')
@@ -24,13 +24,15 @@ class Dao(object):
             conn=MySQLdb.connect(host=masterHost, port=masterPort, user=masterUser, passwd=masterPassword, charset='utf8mb4')
             cursor = conn.cursor()
             sql = "show databases"
-            n = cursor.execute(sql)
+            cursor.execute(sql)
             listDb = [row[0] for row in cursor.fetchall() 
                          if row[0] not in ('information_schema', 'performance_schema', 'mysql', 'test')]
         except MySQLdb.Warning as w:
-            print(str(w))
+            logger.error(traceback.format_exc())
+            raise Exception(w)
         except MySQLdb.Error as e:
-            print(str(e))
+            logger.error(traceback.format_exc())
+            raise Exception(e)
         finally:
             if cursor is not None:
                 cursor.close()
@@ -60,20 +62,26 @@ class Dao(object):
         result = cursor.fetchall()
         return result
 
-   ##liucb ddl统计
+   ##ddl统计
     def getworkChartsddl(self):
         engineers = {}
         alter_result = workflow.objects.filter(cluster_name='DEV环境',status='已正常结束',sql_content__icontains='alter')
 
 
     # 根据集群名获取主库连接字符串，并封装成一个dict
-    def getMasterConnStr(self,clusterName):
-        listMasters = master_config.objects.filter(cluster_name=clusterName)
-
-        masterHost = listMasters[0].master_host
-        masterPort = listMasters[0].master_port
-        masterUser = listMasters[0].master_user
-        masterPassword = Prpcrypt().decrypt(listMasters[0].master_password)
+    def getMasterConnStr(self,clusterName,instanceName):
+        if clusterName and not instanceName:
+            listMasters = master_config.objects.filter(cluster_name=clusterName)
+            masterHost = listMasters[0].master_host
+            masterPort = listMasters[0].master_port
+            masterUser = listMasters[0].master_user
+            masterPassword = Prpcrypt().decrypt(listMasters[0].master_password)
+        elif instanceName and not clusterName:
+            listMasters = instance.objects.filter(instance_name=instanceName)
+            masterHost = listMasters[0].host
+            masterPort = listMasters[0].port
+            masterUser = listMasters[0].user
+            masterPassword = Prpcrypt().decrypt(listMasters[0].password)
         dictConn = {'masterHost': masterHost, 'masterPort': masterPort, 'masterUser': masterUser,
                     'masterPassword': masterPassword}
         return dictConn
@@ -81,7 +89,7 @@ class Dao(object):
     # 连进指定的mysql实例里，执行sql并返回
     def mysql_execute(self,clustername,sql):
         result = {}
-        dictConn = self.getMasterConnStr(clustername)
+        dictConn = self.getMasterConnStr(clustername,None)
         try:
             conn = MySQLdb.connect(host=dictConn['masterHost'], port=dictConn['masterPort'], user=dictConn['masterUser'], passwd=dictConn['masterPassword'],
                                    charset='utf8')
@@ -183,3 +191,39 @@ class Dao(object):
             except:
                 c = -1
             return int(c)
+
+    # 连进指定的mysql实例里，执行sql并返回
+    def mysql_query(self, clustername,instancename,db_name=None, sql='', limit_num=0):
+        result = {'column_list': [], 'rows': [], 'effect_row': 0}
+        dictConn = self.getMasterConnStr(clustername,instancename)
+
+        try:
+            conn = MySQLdb.connect(host=dictConn['masterHost'], port=dictConn['masterPort'], user=dictConn['masterUser'], passwd=dictConn['masterPassword'], db=db_name,
+                                   charset='utf8')
+            cursor = conn.cursor()
+            effect_row = cursor.execute(sql)
+            if int(limit_num) > 0:
+                rows = cursor.fetchmany(size=int(limit_num))
+            else:
+                rows = cursor.fetchall()
+            fields = cursor.description
+
+            column_list = []
+            if fields:
+                for i in fields:
+                    column_list.append(i[0])
+            result['column_list'] = column_list
+            result['rows'] = rows
+            result['effect_row'] = effect_row
+
+        except MySQLdb.Warning as w:
+            logger.error(traceback.format_exc())
+            result['Warning'] = str(w)
+        except MySQLdb.Error as e:
+            logger.error(traceback.format_exc())
+            result['Error'] = str(e)
+        else:
+            conn.rollback()
+            cursor.close()
+            conn.close()
+        return result

@@ -265,6 +265,9 @@ class SyncSc(object):
         global source_list
         source_list = []
 
+        global s_info
+        s_info = None
+
         # 定时器
         if self.code_type == 1:
             mytsstimer = db.tssTimer
@@ -419,7 +422,10 @@ class SyncSc(object):
             else:
                 pass
 
-            return s_info
+            if s_info:
+                return s_info
+            else:
+                return True
 
     # 不同环境连接信息
     def db_connects(self, env_name):

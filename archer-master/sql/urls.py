@@ -1,6 +1,6 @@
 # -*- coding: UTF-8 -*-
 from django.conf.urls import url,include
-from . import views, views_ajax
+from . import views, views_ajax, check, config,instance,group,archsync
 
 urlpatterns = [
     url(r'^$', views.allworkflow, name='allworkflow'),
@@ -61,7 +61,30 @@ urlpatterns = [
     url(r'^mgmutifilter/', views_ajax.mgmutifilter, name='mgmutifilter'),  # jacky
     url(r'^mgmulti/$', views_ajax.mgmuti, name='mgmuti'),  # jacky
 
+    url(r'^instance/$', views.instance, name="instance"),
+    url(r'^instanceuser/(?P<instance_id>[0-9]+)/$', views.instanceuser),
+    url(r'^instance/users/$', instance.users, name="instanceuser"),
+    url(r'^instance/list/$', instance.lists, name="instancelist"),
+
+    url(r'^archsync/$', views.archsync, name='archsync'),  # jacky
+    url(r'^archsync/dbnamelist/$', archsync.dbnamelist, name='archsync/dbnamelist'),
+    url(r'^archsync/schemasync/$', archsync.schemasync, name='archsync/schemasync'),
+
+    url(r'^group/$', views.group, name='viewsgroup'),
+    url(r'grouprelations/(?P<id>[0-9]+)/', views.groupmgmt),
+    url(r'^group/group/$', group.group, name='group'),
+    url(r'^group/addrelation/$', group.addrelation, name='addrelation'),
+    url(r'^group/relations/$', group.associated_objects, name='relations'),
+    url(r'^group/instances/$', group.instances, name='instances'),
+    url(r'^group/unassociated/$', group.unassociated_objects, name='unassociated'),
+
     url(r'^sqlquery/', views.sqlquery, name='sqlquery'),  # jacky
     url(r'^config/', views.parameter_config, name='parameter_config'),  # jacky
+
+    url(r'config/change', config.changeconfig, name='changeconfig'),  # jacky
+
+    url(r'check/inception', check.inception, name='checkinception'),
+    url(r'check/checkinstance', check.check_instance, name='checkinstance'),
+    url(r'check/email', check.email, name='checkemail'),
 
 ]

@@ -1,9 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-    {% load staticfiles %}
-    <script src="{% static 'jquery/jquery.min.js' %}"></script>
-    <script src="{% static 'user/js/mogo.js' %}"></script>
-    <script src="{% static 'user/js/calendar.js' %}"></script>
+
     <div style="padding: 0px 10px 10px 0px;">
         <h4 style="font-family: 'Microsoft YaHei UI';color: #2aabd2">| <span
                 style="color: #0f0f0f">MONGO编码批量提交：</span></h4>
@@ -126,4 +123,9 @@
 
         </ul>
     </div>
+    {% block js %}
+        {% load staticfiles %}
+        <script src="{% static 'user/js/mogo.js' %}"></script>
+        <script src="{% static 'user/js/calendar.js' %}"></script>
+    {% endblock js %}
 {% endblock content %}

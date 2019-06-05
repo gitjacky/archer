@@ -697,7 +697,7 @@ def relsexecute(request):
         context = {'errMsg': '当前工单状态不是等待人工审核中，请刷新当前页面！'}
         return render(request, 'error.html', context)
 
-    dictConn = dao.getMasterConnStr(clusterName)
+    dictConn = dao.getMasterConnStr(clusterName,None)
 
     # 将流程状态修改为执行中，并更新reviewok_time字段
     detailObj.status = Const.workflowStatus['executing']
@@ -901,28 +901,25 @@ def versionsql(request):
     if request.method == 'POST':
         work_rels = workrelease()
         loginUser = request.session.get('login_username', False)
-
         svn_p = request.POST.get('svn_path')
         p_name = request.POST.get('p_name')
         s_name = request.POST.get('s_name')
         ver_name = request.POST.get('ver_name', False)
-        d_event = request.POST.get('d_envirment')
-        print(d_event)
 
+        # mssg=0提交成功,1提交失败,2提交重复
         if ver_name != "is-empty" and ver_name != False:
             # 检查是否已存在待审核数据
             version_obj = workrelease.objects.filter(release_name=request.POST.get('workflow_name'),
                                                      deploy_env=request.POST.get('d_envirment'),
                                                      submit_user=loginUser, execute_status="")
             if len(version_obj) >= 1:
-                msg = '该工单当前状态为待审核，请勿重复提交!'
-                context = {'msg': msg}
+                context = {"msg": "2"}
                 return JsonResponse(context)
             else:
                 work_rels.release_path = os.path.join('/', svn_p, p_name, s_name, ver_name)
         else:
             work_rels.release_path = os.path.join('/', svn_p, p_name, s_name)
-        print(work_rels.release_path)
+
         work_rels.release_name = request.POST.get('workflow_name')
         work_rels.deploy_env = request.POST.get('d_envirment')
         work_rels.submit_user = loginUser
@@ -963,10 +960,10 @@ def versionsql(request):
             execute_status = ''
             _mail(request, rel_version, title_prefix, engineer, deploy_env, release_name, execute_status)
 
-            return JsonResponse({'msg': "提交成功!"})
+            return JsonResponse({"msg": "0"})
 
         else:
-            return JsonResponse({'msg': "提交失败!"})
+            return JsonResponse({"msg": "1"})
     else:
         context = {'currentMenu': 'versions'}
         return render(request, 'versionSql.html', context)
@@ -1231,7 +1228,7 @@ def mgcommit(request):
             logger.error(traceback.format_exc())
             context = {'status': '提交失败！'}
     else:
-        context = {'status':'提交失败!确认是否已正常登录系统!'}
+        context = {'status': '无权提交!确认是否已正常登陆!'}
 
     return JsonResponse(context)
 

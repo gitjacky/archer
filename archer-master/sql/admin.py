@@ -4,7 +4,8 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 
 # Register your models here.
-from .models import users, master_config, workflow, workrelease, detailrecords, rel_memo,mogocode,mongo_config
+from .models import users, master_config, workflow, workrelease, detailrecords, rel_memo,mogocode,mongo_config,instance, \
+    grouprelations
 
 class master_configAdmin(admin.ModelAdmin):
     list_display = ('cluster_name', 'master_host', 'master_port', 'master_user', 'create_time', 'update_time')
@@ -82,6 +83,16 @@ class usersAdmin(UserAdmin):
                                           }),
                                   )
         return super(usersAdmin, self).changelist_view(request, extra_context)
+
+@admin.register(instance)
+class InstanceAdmin(admin.ModelAdmin):
+    list_display = ('id', 'instance_name', 'db_type', 'type', 'host', 'port', 'user', 'create_time')
+    search_fields = ['instance_name', 'host', 'port', 'user']
+    list_filter = ('db_type', 'type',)
+
+@admin.register(grouprelations)
+class GrouprelationsAdmin(admin.ModelAdmin):
+    list_display = ('object_type', 'object_id', 'object_name', 'group_id', 'group_name', 'create_time')
 
 
 admin.site.register(users, usersAdmin)

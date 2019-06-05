@@ -442,6 +442,128 @@ function TimeFormatter(value, row, index) {
     return result;
 }
 
+//时间转换方法
+function getFormatDate(nowDate) {
+    var year = nowDate.getFullYear();
+    var month = nowDate.getMonth() + 1 < 10 ? "0" + (nowDate.getMonth() + 1) : nowDate.getMonth() + 1;
+    var date = nowDate.getDate() < 10 ? "0" + nowDate.getDate() : nowDate.getDate();
+    var hour = nowDate.getHours() < 10 ? "0" + nowDate.getHours() : nowDate.getHours();
+    var minute = nowDate.getMinutes() < 10 ? "0" + nowDate.getMinutes() : nowDate.getMinutes();
+    var second = nowDate.getSeconds() < 10 ? "0" + nowDate.getSeconds() : nowDate.getSeconds();
+    return year + "-" + month + "-" + date + " " + hour + ":" + minute + ":" + second;
+}
+
+//传入“当前页码 每页容量 数据总条数”
+//返回按钮上的文本内容，如：pageBtns(2,10,75) 返回："上一页,1,2,3,4,...,8,下一页" 以逗号分隔的字符串
+function pageBtns(currentPageIndex, currentPageSize, dataCount) {
+    var cpIndex = parseInt(currentPageIndex);
+    var pageSize = parseInt(currentPageSize);
+    var count = parseInt(dataCount);
+    var btnStr = "";
+    var pages = (count % pageSize) == 0 ? (count / pageSize) : Math.floor((count / pageSize + 1));//总页数
+    if (pages <= 4) {//如果小于6页 则显示全部页码按钮
+        for (var i = 1; i <= pages; i++) {
+            btnStr += i + ",";
+        }
+    }
+    else { //大于等于7页
+        var a = [];
+        if (cpIndex !== 1)//位置0
+        {
+            a[0] = "前一页";
+        }
+        else {
+            a[0] = "";
+        }
+
+
+        a[1] = "1"; //位置1 首页
+
+
+        if ((cpIndex - 2) > 2) {//位置2
+            a[2] = "...";
+        }
+        else {
+            a[2] = "";
+        }
+
+
+        if ((cpIndex - 2) >= 2)//位置3
+        {
+            a[3] = cpIndex - 2;
+        }
+        else {
+            a[3] = "";
+        }
+
+
+        if ((cpIndex - 1) >= 2)//位置4
+        {
+            a[4] = cpIndex - 1;
+        }
+        else {
+            a[4] = "";
+        }
+
+
+        //位置5
+        if (cpIndex !== 1 && cpIndex !== pages) {
+            a[5] = cpIndex;
+        }
+        else {
+            a[5] = "";
+        }
+
+
+        //位置6
+        if ((cpIndex + 1) < pages) {
+            a[6] = cpIndex + 1;
+        } else {
+            a[6] = "";
+        }
+
+
+        //位置7
+        if ((cpIndex + 2) < pages) {
+            a[7] = cpIndex + 2;
+        }
+        else {
+            a[7] = "";
+        }
+
+
+        //位置8
+        if ((cpIndex + 2 + 1) < pages) {
+            a[8] = "...";
+        }
+        else {
+            a[8] = "";
+        }
+
+
+        //位置9
+        a[9] = pages;
+
+
+        //位置10
+        if (cpIndex !== pages) {
+            a[10] = "后一页";
+        }
+        else {
+            a[10] = "";
+        }
+
+
+        $.each(a, function (j) {
+            if (a[j] !== "") {
+                btnStr += a[j] + ",";
+            }
+        });
+    }
+    btnStr = btnStr.substring(0, btnStr.length - 1);
+    return btnStr;
+}
+
 //搜索指定时间范围指定环境提交的编码，批量提交到其他环境
 function muti_search() {
     //遍历每个input,获取s_time与e_time

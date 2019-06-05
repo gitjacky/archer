@@ -11,9 +11,9 @@ leftMenuQuery = (
     {'key': 'mysqlquery', 'name': 'MySQL查询', 'url': '/sqlquery/', 'class': 'glyphicon glyphicon-search'},
 )
 leftMenuSuper = (
-    {'key': 'masterconfig', 'name': '主库地址配置', 'url': '/admin/sql/master_config/', 'class': 'glyphicon glyphicon-user'},
-    {'key': 'userconfig', 'name': '用户权限配置', 'url': '/admin/sql/users/', 'class': 'glyphicon glyphicon-th-large'},
-    {'key': 'workflowconfig', 'name': '所有工单管理', 'url': '/admin/sql/workflow/', 'class': 'glyphicon glyphicon-list-alt'},
+    {'key': 'group', 'name': '对象关联管理', 'url': '/group/', 'class': 'glyphicon glyphicon-user'},
+    {'key': 'instance', 'name': '实例配置管理', 'url': '/instance/', 'class': 'glyphicon glyphicon-th-large'},
+    {'key': 'config', 'name': '参数配置管理', 'url': '/config/', 'class': 'glyphicon glyphicon-globe'},
 )
 leftMenuDoc = (
 
@@ -21,9 +21,8 @@ leftMenuDoc = (
 )
 # Jacky
 leftMenuDba = (
-    {'key': 'workflowconfig', 'name': '后台数据管理', 'url': '/admin/sql/', 'class': 'glyphicon glyphicon-menu-hamburger'},
     {'key': 'ddlcount', 'name': '开发DDL统计', 'url': '/ddlcount/', 'class': 'glyphicon glyphicon-list-alt'},
-    {'key': 'config', 'name': '参数配置管理', 'url': '/config/', 'class': 'glyphicon glyphicon-globe'},
+    {'key': 'archsync', 'name': '实例结构对比', 'url': '/archsync/', 'class': 'glyphicon glyphicon-retweet'},
 
 )
 

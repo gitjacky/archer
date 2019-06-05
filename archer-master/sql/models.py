@@ -25,14 +25,14 @@ class users(AbstractUser):
         verbose_name_plural = u'用户配置'
 
 # 配置信息表
-class config(models.Model):
+class sysconfig(models.Model):
     item = models.CharField('配置项', max_length=50, primary_key=True)
     value = models.CharField('配置项值', max_length=200)
     description = models.CharField('描述', max_length=200, default='', blank=True)
 
     class Meta:
         managed = True
-        db_table = 'sql_config'
+        db_table = 'sql_sysconfig'
         verbose_name = u'系统配置'
         verbose_name_plural = u'系统配置'
 
@@ -174,6 +174,49 @@ class mogocode(models.Model):
             ('can_cancel_mogocode', u'中止接口权限'),
         }
 
+# 各个线上实例配置
+class instance(models.Model):
+    instance_name = models.CharField('实例名称', max_length=50, unique=True)
+    type = models.CharField('实例类型', max_length=6, choices=(('master', '主库'), ('slave', '从库')))
+    db_type = models.CharField('数据库类型', max_length=10, choices=(('mysql', 'mysql'),))
+    host = models.CharField('实例地址', max_length=200)
+    port = models.IntegerField('端口', default=3306)
+    user = models.CharField('用户名', max_length=100)
+    password = models.CharField('密码', max_length=300)
+    create_time = models.DateTimeField('创建时间', auto_now_add=True)
+    update_time = models.DateTimeField('更新时间', auto_now=True)
+
+    def __str__(self):
+        return self.instance_name
+
+    class Meta:
+        managed = True
+        db_table = 'sql_instance'
+        verbose_name = u'实例配置'
+        verbose_name_plural = u'实例配置'
+
+    def save(self, *args, **kwargs):
+        pc = Prpcrypt()  # 初始化
+        self.password = pc.encrypt(self.password)
+        super(instance, self).save(*args, **kwargs)
+
+# 组关系表（用户与组、主库与组等）
+class grouprelations(models.Model):
+    object_type = models.IntegerField('关联对象类型', choices=((0, '用户'), (1, '实例')))
+    object_id = models.IntegerField('关联对象主键ID', )
+    object_name = models.CharField('关联对象名：用户名、实例名', max_length=100)
+    group_id = models.IntegerField('组ID')
+    group_name = models.CharField('组名称', max_length=100)
+    create_time = models.DateTimeField(auto_now_add=True)
+    sys_time = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = 'sql_group_relations'
+        unique_together = ('object_id', 'group_id', 'object_type')
+        verbose_name = u'资源组对象管理'
+        verbose_name_plural = u'资源组对象管理'
+
 #mongodb主库地址。
 class mongo_config(models.Model):
     db_name = models.CharField('环境名称', max_length=50)
@@ -213,3 +256,32 @@ class mongolog(models.Model):
         verbose_name = u'mongo同步日志表'
         verbose_name_plural = u'mongo同步日志表'
 
+
+# 自定义权限定义
+class Permission(models.Model):
+    class Meta:
+        managed = True
+        permissions = (
+            ('menu_sqlworkflow', '菜单 SQL上线'),
+            ('menu_query', '菜单 SQL查询'),
+            ('menu_sqlquery', '菜单 MySQL查询'),
+            ('menu_queryapplylist', '菜单 查询权限申请'),
+            ('menu_sqloptimize', '菜单 SQL优化'),
+            ('menu_sqladvisor', '菜单 优化工具'),
+            ('menu_slowquery', '菜单 慢查日志'),
+            ('menu_dbdiagnostic', '菜单 会话管理'),
+            ('menu_schemasync', '菜单 SchemaSync'),
+            ('menu_system', '菜单 系统管理'),
+            ('menu_instance', '菜单 实例管理'),
+            ('menu_document', '菜单 相关文档'),
+            ('menu_themis', '菜单 数据库审核'),
+            ('sql_submit', '提交SQL上线工单'),
+            ('sql_review', '审核SQL上线工单'),
+            ('sql_execute', '执行SQL上线工单'),
+            ('optimize_sqladvisor', '执行SQLAdvisor'),
+            ('optimize_sqltuning', '执行SQLTuning'),
+            ('query_applypriv', '申请查询权限'),
+            ('query_mgtpriv', '管理查询权限'),
+            ('query_review', '审核查询权限'),
+            ('query_submit', '提交SQL查询'),
+        )
