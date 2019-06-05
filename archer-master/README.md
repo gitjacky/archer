@@ -1,5 +1,5 @@
 # archer
-基于inception的自动化SQL操作平台
+基于inception的自动化SQL操作平台，基于开源archer平台针对公司实际需求做二次开发，除基本SQL审核功能外，满足版本发布脚本管理(一个发布版本有多个sql文件),mongo接口同步,一键上线其他环境需求。
 
 ### 开发语言和推荐环境：
 python：3.4<br/>
