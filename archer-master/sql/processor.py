@@ -16,8 +16,8 @@ leftMenuSuper = (
     {'key': 'config', 'name': '参数配置管理', 'url': '/config/', 'class': 'glyphicon glyphicon-globe'},
 )
 leftMenuDoc = (
-
     {'key': 'charts', 'name': '统计图表展示', 'url': '/charts/', 'class': 'glyphicon glyphicon-stats'},
+    {'key': 'dbaprinciples', 'name': 'SQL审核必读', 'url': '/dbaprinciples/', 'class': 'glyphicon glyphicon-book'},
 )
 # Jacky
 leftMenuDba = (
