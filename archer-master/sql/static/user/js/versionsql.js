@@ -767,7 +767,7 @@ function pageBtns(currentPageIndex, currentPageSize, dataCount) {
         });
     }
     btnStr = btnStr.substring(0, btnStr.length - 1);
-    console.log(btnStr);
+    // console.log(btnStr);
     return btnStr;
 }
 
